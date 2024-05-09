@@ -1,0 +1,35 @@
+# www.neaspec.com
+# Scan:	 	Fourier Scan
+# Project:	 	test
+# Description:	 	test
+# Date:	 	04/30/2024 13:02:42
+# Scanner Center Position (X, Y):	[µm]	49.53	49.09	 
+# Rotation:	[°]	0	 	 
+# Scan Area (X, Y, Z):	[µm]	0.000	0.000	0.000
+# Pixel Area (X, Y, Z):	[px]	1	1	4096
+# Interferometer Center/Distance:	[µm]	750.000	489.670	 
+# Averaging:	 	10	 	 
+# Integration time:	[ms]	20	 	 
+# Wavenumber Scaling:	 	0.979340	 	 
+# Laser Source:	 	Synchrotron
+# Detector:	 	R
+# Target Wavelength:	[µm]		 	 
+# Demodulation Mode:	 	Fourier
+# Tip Frequency:	[Hz]	58,410.328	 	 
+# Tip Amplitude:	[mV]	100.000	 	 
+# Tapping Amplitude:	[nm]	77.691	 	 
+# Modulation Frequency:	[Hz]	0.000	 	 
+# Modulation Amplitude:	[mV]	0.000	 	 
+# Modulation Offset:	[mV]	0.000	 	 
+# Setpoint:	[%]	80.08	 	 
+# Regulator (P, I, D):	 	3.151329	5.734274	1.000000
+# Tip Potential:	[mV]	0.000	 	 
+# M1A Scaling:	[nm/V]	0.362	 	 
+# M1A Cantilever Factor:	 	2,675	 	 
+# Q-Factor:	 	204.2	 	 
+# Version:	 	2.1.11145.0
+Row	Column	Omega	Wavenumber	O0A	O0P	O1A	O1P	O2A	O2P	O3A	O3P	O4A	O4P	O5A	O5P	
+0	0	0	0	1.2574604	0	129.49686	-2.2762592E-08	25.667723	-3.1415925	9.36586	-2.6773133E-09	5.077856	-3.1415925	2.8987265	-3.1415925	
+0	0	1	2.5	1.5009164	-0.53072876	299.7326	-2.0167234	54.147293	1.1604714	18.567238	-1.9557438	9.592146	1.2115532	5.1553826	1.2339311	
+0	0	2	5	2.0205183	-1.3161216	491.9174	-3.0947928	87.14946	0.053409584	29.450653	-3.0845668	15.035058	0.07046485	7.9849386	0.06196229	
+0	0	3	7.5	2.5650144	-2.258788	580.73206	2.2369885	101.63999	-0.9223606	34.084457	2.204073	17.317238	-0.93113816	9.235836	-0.9675658	

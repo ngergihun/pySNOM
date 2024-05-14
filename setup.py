@@ -12,10 +12,8 @@ setup(
     license = 'CC BY-NC-SA 4.0 DEED',
     packages = find_packages(),
     install_requires=['scipy',
-                      'numpy', 
+                      'numpy',
                       'gwyfile',
-                      'pyqtgraph',
-                      'PySide6',                    
                       ],
 
     classifiers=[

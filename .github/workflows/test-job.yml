@@ -1,0 +1,36 @@
+name: Job
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      python-version:
+        required: true
+        type: string
+      experimental:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: ${{ inputs.os }} py${{ inputs.python-version }}
+    runs-on: ${{ inputs.os }}
+    continue-on-error: ${{ inputs.experimental }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Test
+        run: |
+          python -m pip install -e .
+          python -m unittest pySNOM.tests

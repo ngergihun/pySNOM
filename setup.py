@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'pySNOM',
-    version = '0.0.1',    
+    version = '0.0.2',
     description = 'Scanning Near-Field Optical Microscopy (SNOM) analysis tools',
     long_description = open('README.md', 'r').read(),
     long_description_content_type = "text/markdown",

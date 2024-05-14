@@ -20,7 +20,5 @@ setup(
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',  
-        'Operating System :: Windows :: macOS',
-        'Programming Language :: Python :: 3.12.0',
     ],
 )

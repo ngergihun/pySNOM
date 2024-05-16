@@ -105,9 +105,9 @@ class NeaImage:
         return infodict
 
 
-def LineLevel(inputobj: NeaImage, mtype: str):
+def line_level(inputobj: NeaImage, mtype: str):
     outputobj = copy.deepcopy(inputobj)
-    match mtype:
+    match mtype:  # TODO: "match" is not python 3.9 and 3.8 compatible - we need to specify this in the requirements.
         case 'median':
             for i in range(inputobj.data.shape[0]):
                 if inputobj.isamp:
@@ -131,7 +131,7 @@ def LineLevel(inputobj: NeaImage, mtype: str):
     return outputobj
 
 
-def BackgroundPolyFit(inputobj: NeaImage, xorder: int, yorder: int):
+def bg_polyfit(inputobj: NeaImage, xorder: int, yorder: int):
     outputobj = copy.deepcopy(inputobj)
     Z = copy.deepcopy(outputobj.data)
     x = list(range(0, outputobj.xres))
@@ -164,7 +164,7 @@ def BackgroundPolyFit(inputobj: NeaImage, xorder: int, yorder: int):
     return outputobj, background
 
 
-def RotatePhase(inputobj: NeaImage, degree: float):
+def rotate_phase(inputobj: NeaImage, degree: float):
     outputobj = copy.deepcopy(inputobj)
 
     # Load amplitude image
@@ -185,18 +185,24 @@ def RotatePhase(inputobj: NeaImage, degree: float):
     return outputobj
 
 
-def SelfReferencing(inputobj: NeaImage, order: int):
+def self_reference(inputobj: NeaImage, order: int):
     outputobj = copy.deepcopy(inputobj)
     # Load the other harmonic
     referenceobj = NeaImage()
+
+    channelname = ''
     if inputobj.isamp:
         channelname = f'O{order}A raw'
     elif inputobj.isphase:
         channelname = f'O{order}P raw'
     else:
         pass
-    referenceobj.read_from_gwyfile(inputobj.filename, channelname)
-    referenceobj.parameters = inputobj.parameters
+
+    if channelname is not None:
+        referenceobj.read_from_gwyfile(inputobj.filename, channelname)
+        referenceobj.parameters = inputobj.parameters
+    else:
+        return None  # TODO: raise some error instead
 
     if inputobj.isamp:
         outputobj.data = np.divide(inputobj.data, referenceobj.data)
@@ -208,9 +214,9 @@ def SelfReferencing(inputobj: NeaImage, order: int):
     return outputobj
 
 
-def SimpleNormalize(inputobj: NeaImage, mtype: str, value=1):
+def normalize_simple(inputobj: NeaImage, method='median', value=1):
     outputobj = copy.deepcopy(inputobj)
-    match mtype:
+    match method:
         case 'median':
             if inputobj.isAmplitude():
                 outputobj.data = inputobj.data / np.median(inputobj.data)
@@ -253,7 +259,7 @@ class NeaSpectrum:
         # Other parameters from info txt -  Dictionary
         self.parameters = None
 
-    def readNeaSpectrum(self, filename):
+    def read_neasp(self, filename):
         # reader tested for neascan version 2.1.10719.0
         self.filename = filename
         fid = open(filename, errors='replace')
@@ -331,8 +337,7 @@ class NeaSpectrum:
         self.data = data
 
 
-    def SaveSpectraToDAT(self, channelname):
-        # TODO: rename to def save_dat(self, channelname):
+     def save_dat(self, channelname):
         fname = f'{self.filename[0:-4]}.dat'
         M = np.array([self.data["Wavenumber"], self.data[channelname]])
         np.savetxt(fname, M.T)

@@ -6,7 +6,7 @@
 # Scanner Center Position (X, Y):	[µm]	49.53	49.09	 
 # Rotation:	[°]	0	 	 
 # Scan Area (X, Y, Z):	[µm]	0.000	0.000	0.000
-# Pixel Area (X, Y, Z):	[px]	1	1	4096
+# Pixel Area (X, Y, Z):	[px]	1	1	2
 # Interferometer Center/Distance:	[µm]	750.000	489.670	 
 # Averaging:	 	10	 	 
 # Integration time:	[ms]	20	 	 

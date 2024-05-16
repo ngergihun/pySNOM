@@ -337,7 +337,7 @@ class NeaSpectrum:
         self.data = data
 
 
-     def save_dat(self, channelname):
+    def save_dat(self, channelname):
         fname = f'{self.filename[0:-4]}.dat'
         M = np.array([self.data["Wavenumber"], self.data[channelname]])
         np.savetxt(fname, M.T)

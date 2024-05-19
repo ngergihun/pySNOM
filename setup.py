@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-import pySNOM
+import .pySNOM
 
 setup(
     name='pySNOM',

@@ -10,7 +10,7 @@ from pySNOM import NeaSpectrum
 class test_Neaspectrum(unittest.TestCase):
     def test_readfile(self):
         neasp = NeaSpectrum()
-        neasp.readNeaSpectrum(os.path.join(pySNOM.__path__[0], 'datasets/sp.txt'))
+        neasp.read_neasp(os.path.join(pySNOM.__path__[0], 'datasets/sp.txt'))
 
         np.testing.assert_almost_equal(neasp.data['O1A'][0], 129.49686)
 

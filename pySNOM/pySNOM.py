@@ -225,24 +225,26 @@ def SimpleNormalize(inputobj: NeaImage, mtype: str, value=1):
 
 
 def CalcCrossSectionRect(Rect1, Rect2):
-    x1 = Rect1(1) 
-    x2 = Rect2(1) 
-    y1 = Rect1(2) 
-    y2 = Rect2(2)
-    W1 = Rect1(3) 
-    W2 = Rect2(3) 
-    H1 = Rect1(4)
-    H2 = Rect2(4)
+    # TODO: implement correctly
+    pass
+    # x1 = Rect1(1) 
+    # x2 = Rect2(1) 
+    # y1 = Rect1(2) 
+    # y2 = Rect2(2)
+    # W1 = Rect1(3) 
+    # W2 = Rect2(3) 
+    # H1 = Rect1(4)
+    # H2 = Rect2(4)
 
-    if y2 > y1:  # Positive shift
-        Hn = H1-(y2-y1)
-        yn = y2
-    elif y2 < y1 and y1+H1 > y2 + H2:  # Negative shift and higher than H2
-        Hn = H2 + (y2 - y1)
-        yn = y1
-    else:
-        Hn = H1
-        yn = y1
+    # if y2 > y1:  # Positive shift
+    #     Hn = H1-(y2-y1)
+    #     yn = y2
+    # elif y2 < y1 and y1+H1 > y2 + H2:  # Negative shift and higher than H2
+    #     Hn = H2 + (y2 - y1)
+    #     yn = y1
+    # else:
+    #     Hn = H1
+    #     yn = y1
 
 
 class NeaSpectrum:

@@ -6,9 +6,9 @@ import numpy as np
 import pySNOM
 from pySNOM import NeaImage
 
-# TODO we need a 4x4 gwyfile for the testing
+
 class test_public_functions(unittest.TestCase):
-    def test_normalize_simple(self, im):
+    def test_normalize_simple(self):
         f = 'datasets/image.gwy'
         im = NeaImage()
         im.read_from_gwyfile(os.path.join(pySNOM.__path__[0], f), 'M1A raw')
@@ -25,6 +25,7 @@ class test_public_functions(unittest.TestCase):
         im.read_from_gwyfile(os.path.join(pySNOM.__path__[0], f), 'M1A raw')
 
         pass
+
 
 if __name__ == '__main__':
     unittest.main()

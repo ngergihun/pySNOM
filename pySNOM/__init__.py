@@ -9,3 +9,5 @@ __author__ = 'Gergely Németh, Ferenc Borondics'
 __credits__ = 'Wigner Research Centre for Physics, Synchrotron SOLEIL'
 
 from . import NeaImager, NeaSpectra
+from NeaImager import NeaImage
+from NeaSpectra import NeaSpectrum

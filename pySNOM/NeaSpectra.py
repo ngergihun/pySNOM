@@ -3,7 +3,6 @@ import os
 import copy
 from scipy import signal
 from scipy.fft import fft, fftshift
-from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline, interp1d
 import copy
 

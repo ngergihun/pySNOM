@@ -89,7 +89,7 @@ class NeaSpectrum:
                     data[channels[i]] = np.reshape(C_data[:,i], (params['PixelArea'][0], params['PixelArea'][1], params['PixelArea'][2]*2))
         self.data = data
 
-    def SaveSpectraToDAT(self,channelname):
+    def saveSpectraToDAT(self,channelname):
         fname = f'{self.filename[0:-4]}.dat'
         M = np.array([self.data["Wavenumber"],self.data[channelname]])
         np.savetxt(fname, M.T)
@@ -471,18 +471,12 @@ class NeaInterferogram:
 
         return newifg, newmaxis
 
-    def analyseRealSteps(self, maxis, plotoption = False):
+    def analyseRealSteps(self, maxis):
         # maxis = self.reshapeSinglePointFromChannel("M")*1e6
         stepsize = np.zeros((np.shape(maxis)[0],1))
         stepspread = np.zeros((np.shape(maxis)[0],1))
         for i in range(np.shape(maxis)[0]):
             stepsize[i] = np.mean(np.diff(maxis[i,:]))
             stepspread[i] = np.std(np.diff(maxis[i,:]))
-        if plotoption:
-            # plt.figure()
-            plt.hist(np.diff(maxis[0,:]), bins = 300)
-            plt.show()
-        else:
-            pass
 
         return stepsize, stepspread

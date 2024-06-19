@@ -8,4 +8,4 @@ __version__ = '0.0.2'
 __author__ = 'Gergely Németh, Ferenc Borondics'
 __credits__ = 'Wigner Research Centre for Physics, Synchrotron SOLEIL'
 
-from .pySNOM import *
+from . import NeaImager, NeaSpectra

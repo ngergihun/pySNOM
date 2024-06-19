@@ -2,11 +2,10 @@ import gwyfile
 import numpy as np
 import copy
 
-
 class NeaImage:
     def __init__(self) -> None:
         # Name regarding file and neaSCAN project
-        self.filename = None  # Full path with name
+        self.filename = None # Full path with name
         self.channel_name = None
         self.meas_name = None
         # Important measurement parameters from gwyddion file
@@ -16,7 +15,7 @@ class NeaImage:
         self.yoff = None    # Center position Y
         self.xres = None    # Pixel size in X
         self.yres = None    # Pixel size in Y
-        self.isamp = None   # Amplitude -True or phase/topography - false - VERY IMPORTANT
+        self.isamp  = None # Amplitude -True or phase/topography - false - VERY IMPORTANT
         self.istopo = None
         self.isphase = None
         # Data/Image itself
@@ -24,7 +23,7 @@ class NeaImage:
         # Other parameters from info txt -  Dictionary
         self.parameters = None
 
-    def read_from_gwyfile(self, filename: str, channelname: str):
+    def read_from_gwyfile(self,filename: str, channelname: str):
         self.filename = filename
         self.channel_name = channelname
         gwyobj = gwyfile.load(self.filename)
@@ -35,7 +34,7 @@ class NeaImage:
         # Set the basic attributes from gwyddion field
         for key in channel:
             if key in dir(self):
-                setattr(self, key, channel[key])
+                setattr(self,key,channel[key])
         self.data = channel.data
 
     def isAmplitude(self):
@@ -52,9 +51,9 @@ class NeaImage:
                 self.istopo = False
                 self.isphase = True
 
-    def read_info_file(self, filename):
+    def read_info_file(self,filename):
         # reader tested for neascan version 2.1.10719.0
-        fid = open(filename, errors='replace')
+        fid = open(filename,errors='replace')
         infodict = {}
 
         linestring = ''
@@ -96,7 +95,7 @@ class NeaImage:
                     fieldname = ct[0][2:-1]
                     fieldname = fieldname.replace(' ', '')
                     val = ct[2]
-                    val = val.replace(',', '')
+                    val = val.replace(',','')
                     try:
                         infodict[fieldname] = float(val)
                     except:
@@ -104,10 +103,11 @@ class NeaImage:
         fid.close()
         return infodict
 
-
-def line_level(inputobj: NeaImage, mtype: str):
+######### Correction functions ######
+# Line leveling
+def LineLevel(inputobj: NeaImage, mtype: str):
     outputobj = copy.deepcopy(inputobj)
-    match mtype:  # TODO: "match" is not python 3.9 and 3.8 compatible - we need to specify this in the requirements.
+    match mtype:
         case 'median':
             for i in range(inputobj.data.shape[0]):
                 if inputobj.isamp:
@@ -130,13 +130,12 @@ def line_level(inputobj: NeaImage, mtype: str):
                     outputobj.data[i][:] = inputobj.data[i][:]-c
     return outputobj
 
-
-def bg_polyfit(inputobj: NeaImage, xorder: int, yorder: int):
+def BackgroundPolyFit(inputobj: NeaImage, xorder: int, yorder: int):
     outputobj = copy.deepcopy(inputobj)
     Z = copy.deepcopy(outputobj.data)
     x = list(range(0, outputobj.xres))
     y = list(range(0, outputobj.yres))
-    X, Y = np.meshgrid(x, y)
+    X, Y = np.meshgrid(x,y)
     x, y = X.ravel(), Y.ravel()
 
     def get_basis(x, y, max_order_x=1, max_order_y=1):
@@ -153,8 +152,7 @@ def bg_polyfit(inputobj: NeaImage, xorder: int, yorder: int):
     b = Z.ravel()
     c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
-    background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, xorder, yorder)).reshape(len(basis), *X.shape),
-                        axis=0)
+    background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, xorder, yorder)).reshape(len(basis), *X.shape), axis=0)
 
     if inputobj.isamp:
         outputobj.data = Z/background
@@ -163,8 +161,7 @@ def bg_polyfit(inputobj: NeaImage, xorder: int, yorder: int):
 
     return outputobj, background
 
-
-def rotate_phase(inputobj: NeaImage, degree: float):
+def RotatePhase(inputobj: NeaImage, degree: float):
     outputobj = copy.deepcopy(inputobj)
 
     # Load amplitude image
@@ -173,8 +170,8 @@ def rotate_phase(inputobj: NeaImage, degree: float):
     else:
         ampIm = NeaImage()
         new_channelname = inputobj.channel_name
-        new_channelname = new_channelname.replace('P', 'A')
-        ampIm.read_from_gwyfile(inputobj.filename, new_channelname)
+        new_channelname = new_channelname.replace('P','A')
+        ampIm.read_from_gwyfile(inputobj.filename,new_channelname)
         ampIm.parameters = inputobj.parameters
 
         # Complex map
@@ -184,28 +181,21 @@ def rotate_phase(inputobj: NeaImage, degree: float):
 
     return outputobj
 
-
-def self_reference(inputobj: NeaImage, order: int):
+def SelfReferencing(inputobj: NeaImage, order: int):
     outputobj = copy.deepcopy(inputobj)
     # Load the other harmonic
     referenceobj = NeaImage()
-
-    channelname = ''
     if inputobj.isamp:
         channelname = f'O{order}A raw'
     elif inputobj.isphase:
         channelname = f'O{order}P raw'
     else:
         pass
-
-    if channelname is not None:
-        referenceobj.read_from_gwyfile(inputobj.filename, channelname)
-        referenceobj.parameters = inputobj.parameters
-    else:
-        return None  # TODO: raise some error instead
+    referenceobj.read_from_gwyfile(inputobj.filename,channelname)
+    referenceobj.parameters = inputobj.parameters
 
     if inputobj.isamp:
-        outputobj.data = np.divide(inputobj.data, referenceobj.data)
+        outputobj.data = np.divide(inputobj.data,referenceobj.data)
     elif inputobj.isphase:
         outputobj.data = inputobj.data-referenceobj.data
     else:
@@ -213,10 +203,9 @@ def self_reference(inputobj: NeaImage, order: int):
 
     return outputobj
 
-
-def normalize_simple(inputobj: NeaImage, method='median', value=1):
+def SimpleNormalize(inputobj: NeaImage, mtype: str, value = 1):
     outputobj = copy.deepcopy(inputobj)
-    match method:
+    match mtype:
         case 'median':
             if inputobj.isAmplitude():
                 outputobj.data = inputobj.data / np.median(inputobj.data)
@@ -229,124 +218,22 @@ def normalize_simple(inputobj: NeaImage, method='median', value=1):
                 outputobj.data = inputobj.data - value
     return outputobj
 
+def CalcCrossSectionRect(Rect1,Rect2):
+    x1 = Rect1(1) 
+    x2 = Rect2(1) 
+    y1 = Rect1(2) 
+    y2 = Rect2(2)
+    W1 = Rect1(3) 
+    W2 = Rect2(3) 
+    H1 = Rect1(4)
+    H2 = Rect2(4)
 
-def CalcCrossSectionRect(Rect1, Rect2):
-    # TODO: implement correctly
-    pass
-    # x1 = Rect1(1) 
-    # x2 = Rect2(1) 
-    # y1 = Rect1(2) 
-    # y2 = Rect2(2)
-    # W1 = Rect1(3) 
-    # W2 = Rect2(3) 
-    # H1 = Rect1(4)
-    # H2 = Rect2(4)
-
-    # if y2 > y1:  # Positive shift
-    #     Hn = H1-(y2-y1)
-    #     yn = y2
-    # elif y2 < y1 and y1+H1 > y2 + H2:  # Negative shift and higher than H2
-    #     Hn = H2 + (y2 - y1)
-    #     yn = y1
-    # else:
-    #     Hn = H1
-    #     yn = y1
-
-
-class NeaSpectrum:
-    def __init__(self) -> None:
-        self.filename = None  # Full path with name
-        # data from all the channels
-        self.data = None
-        # Other parameters from info txt -  Dictionary
-        self.parameters = None
-
-    def read_neasp(self, filename):
-        # reader tested for neascan version 2.1.10719.0
-        self.filename = filename
-        fid = open(filename, errors='replace')
-        data = {}
-        params = {}
-
-        linestring = fid.readline()
-        Nlines = 1
-
-        # with f as ... is better?
-        while 'Row' not in linestring:
-            Nlines += 1
-            linestring = fid.readline()
-            if Nlines > 1:
-                ct = linestring.split('\t')
-                fieldname = ct[0][2:-1]
-                fieldname = fieldname.replace(' ', '')
-
-                if 'Scanner Center Position' in linestring:
-                    fieldname = fieldname[:-5]
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif 'Scan Area' in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif 'Pixel Area' in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
-
-                elif 'Interferometer Center/Distance' in linestring:
-                    fieldname = fieldname.replace('/', '')
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif 'Regulator' in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif 'Q-Factor' in linestring:
-                    fieldname = fieldname.replace('-', '')
-                    params[fieldname] = float(ct[2])
-
-                else:
-                    fieldname = ct[0][2:-1]
-                    fieldname = fieldname.replace(' ', '')
-                    val = ct[2]
-                    val = val.replace(',', '')
-                    try:
-                        params[fieldname] = float(val)
-                    except:
-                        params[fieldname] = val.strip()
-
-        channels = linestring.split('\t')
-        self.parameters = params
-        fid.close()
-
-        if "PTE+" in params['Scan']:
-            C_data = np.genfromtxt(filename, skip_header=Nlines, encoding='utf-8')
-        else:
-            C_data = np.genfromtxt(filename, skip_header=Nlines)
-
-        for i in range(len(channels)-2):
-            if params['PixelArea'][1] and params['PixelArea'][0] == 1:
-                if "PTE+" in params['Scan']:
-                    data[channels[i]] = np.reshape(C_data[:, i], (params['PixelArea'][2]))
-                else:
-                    data[channels[i]] = np.reshape(C_data[:, i], (params['PixelArea'][2]*2))
-            else:
-                if "PTE+" in params['Scan']:
-                    data[channels[i]] = np.reshape(C_data[:, i], (params['PixelArea'][0],
-                                                                  params['PixelArea'][1], params['PixelArea'][2]))
-                else:
-                    data[channels[i]] = np.reshape(C_data[:, i], (params['PixelArea'][0],
-                                                                  params['PixelArea'][1], params['PixelArea'][2]*2))
-        self.data = data
-
-
-    def save_dat(self, channelname):
-        fname = f'{self.filename[0:-4]}.dat'
-        M = np.array([self.data["Wavenumber"], self.data[channelname]])
-        np.savetxt(fname, M.T)
-
-    # TODO: implement read_dat
-    def read_dat(self):
-        pass
-
-
-
+    if y2 > y1: #Positive shift
+        Hn = H1-(y2-y1)
+        yn = y2
+    elif y2 < y1 and y1+H1>y2+H2: #Negative shift and higher than H2
+        Hn = H2+(y2-y1)
+        yn = y1
+    else:
+        Hn = H1
+        yn = y1

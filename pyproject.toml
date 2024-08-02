@@ -17,11 +17,16 @@ description = "Python tools for SNOM data processing."
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["snom", "near-field", "data processing"]
+
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
   "Programming Language :: Python"
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

@@ -105,7 +105,7 @@ class Image(Data):
         else:
             self.datatype = DataTypes["Amplitude"]
 
-    def setImageParameters(self, singlechannel: dict):
+    def setImageParameters(self, singlechannel):
         # Set the basic attributes from gwyddion field
         for key in singlechannel:
             if key in dir(self):

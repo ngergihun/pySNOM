@@ -1,4 +1,6 @@
 import gwyfile
+import gsffile
+import numpy as np
 
 class Reader:
     def __init__(self, fullfilepath):
@@ -19,6 +21,16 @@ class Reader:
         gwyobj = gwyfile.load(self.filename)
         channels = gwyfile.util.get_datafields(gwyobj)
         channel = channels[channelname]
+
+        return channel
+    
+    def read_gsffile(self):
+        data, metadata = gsffile.read_gsf(self.filename)
+
+        channel = gwyfile.objects.GwyDataField(data,
+                 xreal=metadata["XReal"], yreal=metadata["YReal"], xoff=metadata["XOffset"], yoff=metadata["YOffset"],
+                 si_unit_xy=None, si_unit_z=None,
+                 typecodes=None)
 
         return channel
 

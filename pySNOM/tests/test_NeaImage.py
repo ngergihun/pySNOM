@@ -4,18 +4,30 @@ import os
 import numpy as np
 
 import pySNOM
-from pySNOM import NeaImage
+from pySNOM import Reader, Image
 
 class test_NeaImage(unittest.TestCase):
     def test_readfile(self):
-        f = 'datasets/image.gwy'
-        im = NeaImage()
-        im.read_from_gwyfile(os.path.join(pySNOM.__path__[0], f), 'M1A raw')
+        f = 'datasets/testPsHetData.gwy'
+        file_reader = Reader(os.path.join(pySNOM.__path__[0], f))
+        channeldata = file_reader.read_gwychannel('O3A raw')
 
-        np.testing.assert_almost_equal(im.data[7][7], 70.70956420)
-        np.testing.assert_almost_equal(im.data[8][8], 70.34189605)
-        np.testing.assert_almost_equal(im.data[1][9], 70.69984436)
+        im = Image(channeldata=channeldata)
 
+        np.testing.assert_almost_equal(im.data[7][7], 15.213262557983398)
+        np.testing.assert_almost_equal(im.data[8][8], 15.736936569213867)
+        np.testing.assert_almost_equal(im.data[9][9], 13.609171867370605)
+
+    def test_readgsf(self):
+        f = 'datasets/testPsHet O3A raw.gsf'
+        file_reader = Reader(os.path.join(pySNOM.__path__[0], f))
+        channeldata = file_reader.read_gsffile()
+        im = Image(channeldata=channeldata)
+        im.setChannel('O3A raw')
+
+        np.testing.assert_almost_equal(im.data[7][7], 15.213262557983398)
+        np.testing.assert_almost_equal(im.data[8][8], 15.736936569213867)
+        np.testing.assert_almost_equal(im.data[9][9], 13.609171867370605)
 
 if __name__ == '__main__':
     unittest.main()

@@ -112,26 +112,24 @@ class Image(Data):
                 setattr(self, key, singlechannel[key])
         self.setData(data=singlechannel.data)
 
-class Process:
-    def __init__(self, data = None):
-        self.data = data
-        if self.data is not None:
-            self.output = np.zeros(np.shape(self.data))
-        else:
-            self.output = None
 
-    def setData(self, data):
+class Transformation:
+
+    def transform(self, data):
+        raise NotImplementedError()
+
+
+class LineLevel(Transformation):
+
+    def __init__(self, mtype = 'median', datatype = DataTypes.Phase):
+        self.mtype = mtype
+        self.datatype = datatype
+
+    def transform(self, data):
+        mtype, datatype = self.mtype, self.datatype
         self.data = data
         self.output = np.zeros(np.shape(self.data))
-
-    def getOutput(self):
-        return self.output
-    
-    def getData(self):
-        return self.data
-
-    def line_level(self, mtype = 'median', datatype = DataTypes.Phase):
-        match mtype:  # TODO: "match" is not python 3.9 and 3.8 compatible - we need to specify this in the requirements.
+        match self.mtype:  # TODO: "match" is not python 3.9 and 3.8 compatible - we need to specify this in the requirements.
             case 'median':
                 for i in range(self.data.shape[0]):
                     if datatype == DataTypes["Amplitude"]:
@@ -153,6 +151,25 @@ class Process:
                         c = np.median(self.data[i+1][:]-self.data[i][:])
                         self.output[i][:] = self.data[i][:]-c
         return self.output
+
+
+class Process:
+    def __init__(self, data = None):
+        self.data = data
+        if self.data is not None:
+            self.output = np.zeros(np.shape(self.data))
+        else:
+            self.output = None
+
+    def setData(self, data):
+        self.data = data
+        self.output = np.zeros(np.shape(self.data))
+
+    def getOutput(self):
+        return self.output
+    
+    def getData(self):
+        return self.data
 
     def bg_polyfit(self, xorder = int(1), yorder = int(1), datatype = DataTypes.Phase):
         Z = copy.deepcopy(self.data)

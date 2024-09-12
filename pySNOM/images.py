@@ -121,36 +121,26 @@ class Transformation:
 
 class LineLevel(Transformation):
 
-    def __init__(self, mtype = 'median', datatype = DataTypes.Phase):
+    def __init__(self, mtype='median', datatype=DataTypes.Phase):
         self.mtype = mtype
         self.datatype = datatype
 
     def transform(self, data):
-        mtype, datatype = self.mtype, self.datatype
-        self.data = data
-        self.output = np.zeros(np.shape(self.data))
-        match self.mtype:  # TODO: "match" is not python 3.9 and 3.8 compatible - we need to specify this in the requirements.
-            case 'median':
-                for i in range(self.data.shape[0]):
-                    if datatype == DataTypes["Amplitude"]:
-                        self.output[i][:] = self.data[i][:]/np.median(self.data[i][:])
-                    else:
-                        self.output[i][:] = self.data[i][:]-np.median(self.data[i][:])
-            case 'average':
-                for i in range(self.data.shape[0]):
-                    if datatype == DataTypes["Amplitude"]:
-                        self.output[i][:] = self.data[i][:]/np.mean(self.data[i][:])
-                    else:
-                        self.output[i][:] = self.data[i][:]-np.mean(self.data[i][:])
-            case 'difference':
-                for i in range(self.data.shape[0]-1):
-                    if datatype == DataTypes["Amplitude"]:
-                        c = np.median(self.data[i+1][:]/self.data[i][:])
-                        self.output[i][:] = self.data[i][:]/c
-                    else:
-                        c = np.median(self.data[i+1][:]-self.data[i][:])
-                        self.output[i][:] = self.data[i][:]-c
-        return self.output
+        if self.mtype == 'median':
+            norm = np.median(data, axis=1, keepdims=True)
+        elif self.mtype == 'average':
+            norm = np.mean(data, axis=1, keepdims=True)
+        elif self.mtype == 'difference':
+            if self.datatype == DataTypes.Amplitude:
+                norm = np.median(data[1:] / data[:-1], axis=1, keepdims=True)
+            else:
+                norm = np.median(data[1:] - data[:-1], axis=1, keepdims=True)
+            data = data[:-1]  # difference does not make sense for the last row
+
+        if self.datatype == DataTypes.Amplitude:
+            return data / norm
+        else:
+            return data - norm
 
 
 class Process:

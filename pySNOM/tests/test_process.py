@@ -38,10 +38,8 @@ class TestLineLevel(unittest.TestCase):
         l = LineLevel(mtype="difference", datatype=DataTypes.Phase)
         out = l.transform(d)
         np.testing.assert_almost_equal(out, [[-4., -3., -1.],
-                                             [ 0.,  1.,  3.],
-                                             [ 0.,  0.,  0.]])
+                                             [ 0.,  1.,  3.]])
         l = LineLevel(mtype="difference", datatype=DataTypes.Amplitude)
         out = l.transform(d)
         np.testing.assert_almost_equal(out, [[0.       , 0.2      , 0.6      ],
-                                             [2.2222222, 2.7777778, 3.8888889],
-                                             [0.       , 0.       , 0.       ]])
+                                             [2.2222222, 2.7777778, 3.8888889]])

@@ -8,35 +8,50 @@ DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
 ChannelTypes = Enum('ChannelTypes', ['Optical','Mechanical'])
 
 # Full measurement data containing all the measurement channels
-class Data:
-    def __init__(self, filename = None, data = None, parameters = None, mode = "None"):
+class Measurement:
+    def __init__(self, filename = None, data = None, info = None, mode = "None"):
         self.filename = filename  # Full path with name
         # Measurement mode (PTE, PSHet, AFM, NanoFTIR) - Enum MeasurementModes
         self.mode = MeasurementModes[mode]
         # Full data from the gwy files with all the channels
-        self.data = data # All channels - Dictionary
+        self._data = data # All channels - Dictionary
         # Other parameters from info txt -  Dictionary
-        if parameters is not None:
-            self.setParameters(parameters)
+        if info is not None:
+            self.setParameters(info)
         else:
-            self.parameters = parameters
+            self._info = info
 
-    # Method to set the actual data read from the gwyddion or gsf files
-    def setData(self, data: dict):
-        self.data = data
+    @property
+    def mode(self):
+        return self._mode
+    @mode.setter
+    def mode(self, value: str):
+        try:
+            self._mode = MeasurementModes[value]
+        except ValueError:
+            self._mode = MeasurementModes["AFM"]
+            raise ValueError(value + 'is not a measurement mode!')
 
-    # Method to set measurement mode directly
-    def setMeasurementMode(self, measmode: str):
-        self.mode = MeasurementModes[measmode]
+    @property
+    def data(self):
+        return self._data
+    @data.setter
+    def data(self, data: dict):
+        self._data = data
 
+    # @property
+    # def info(self):
+    #     re
+
+# METHODS --------------------------------------------------------------------------------------
     # Method to retrieve e specific channel from all the measurement channels
-    def getChannelData(self, channelname: str):
+    def get_channel(self, channelname: str):
         channel = self.data[channelname]
         return channel
     
     # Method to set the additional informations about the measurement from the neaspec info txt
     def setParameters(self, infodict: dict):
-        self.parameters = infodict
+        self.info = infodict
         self.setMeasurementModeFromParameters()
     
     # Method to set the 
@@ -45,7 +60,7 @@ class Data:
             print('Load the info file first')
         else:
             m = self.parameters["Scan"]
-            self.setMeasurementMode(defaults.image_mode_defs[m])
+            self.mode = defaults.image_mode_defs[m]
 
     def getImageChannel(self, channelname: str):
         singleimage = Image()
@@ -63,7 +78,7 @@ class Data:
 
 
 # Single image from a single data channel
-class Image(Data):
+class Image(Measurement):
     def __init__(self, channeldata = None) -> None:
         super().__init__()
         # Describing channel and datatype
@@ -190,7 +205,7 @@ class SimpleNormalize(Transformation):
                 else:
                     return data - self.value
                 
-class BackgroundPolyFit(Transformation, xorder = int(1), yorder = int(1), datatype = DataTypes.Phase):
+class BackgroundPolyFit(Transformation):
 
     def __init__(self, xorder=int(1), yorder=int(1), datatype=DataTypes.Phase):
         self.xorder = xorder

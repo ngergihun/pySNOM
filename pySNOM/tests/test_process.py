@@ -43,3 +43,7 @@ class TestLineLevel(unittest.TestCase):
         out = l.transform(d)
         np.testing.assert_almost_equal(out, [[0.       , 0.2      , 0.6      ],
                                              [2.2222222, 2.7777778, 3.8888889]])
+
+
+if __name__ == '__main__':
+    unittest.main()

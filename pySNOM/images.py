@@ -47,7 +47,7 @@ class Data:
             m = self.parameters["Scan"]
             self.setMeasurementMode(defaults.image_mode_defs[m])
 
-    def getImageFromChannel(self, channelname: str):
+    def getImageChannel(self, channelname: str):
         singleimage = Image()
 
         singleimage.filename = self.filename
@@ -79,7 +79,6 @@ class Image(Data):
         self.yres = None    # Pixel size in Y
         # Overwrite the data definition of parent class
         self.data = None # Actual data, this case it is only a single channel
-        self.processor = Process()
 
         if channeldata:
             self.setImageParameters(channeldata)
@@ -88,7 +87,6 @@ class Image(Data):
     def setData(self, data):
         # Set the data
         self.data = data
-        self.processor.setData(self.data)
         
     def getData(self):
         # Set the data
@@ -121,16 +119,16 @@ class Transformation:
 
 class LineLevel(Transformation):
 
-    def __init__(self, mtype='median', datatype=DataTypes.Phase):
-        self.mtype = mtype
+    def __init__(self, method='median', datatype=DataTypes.Phase):
+        self.method = method
         self.datatype = datatype
 
     def transform(self, data):
-        if self.mtype == 'median':
+        if self.method == 'median':
             norm = np.median(data, axis=1, keepdims=True)
-        elif self.mtype == 'average':
+        elif self.method == 'average':
             norm = np.mean(data, axis=1, keepdims=True)
-        elif self.mtype == 'difference':
+        elif self.method == 'difference':
             if self.datatype == DataTypes.Amplitude:
                 norm = np.median(data[1:] / data[:-1], axis=1, keepdims=True)
             else:
@@ -142,29 +140,67 @@ class LineLevel(Transformation):
         else:
             return data - norm
 
+class RotatePhase(Transformation):
 
-class Process:
-    def __init__(self, data = None):
-        self.data = data
-        if self.data is not None:
-            self.output = np.zeros(np.shape(self.data))
+    def __init__(self, degree=90.0):
+        self.degree = degree
+
+    def transform(self, amplitudedata, phasedata):
+        # Construct complex dataset
+        complexdata = amplitudedata * np.exp(phasedata*complex(1j))
+        # Rotate and extract phase
+        return np.angle(complexdata*np.exp(np.deg2rad(self.degree)*complex(1j)))
+
+class SelfReference(Transformation):
+
+    def __init__(self, datatype=DataTypes.Phase):
+        self.datatype = datatype
+
+    def transform(self, data, referencedata):
+        if self.datatype == DataTypes.Amplitude:
+            return np.divide(data, referencedata)
+        elif self.datatype == DataTypes.Phase:
+            return data-referencedata
         else:
-            self.output = None
+            # TODO: We should replace this with a datatype error raise
+            print("Self-referencing makes only sense for amplitude or phase data")
 
-    def setData(self, data):
-        self.data = data
-        self.output = np.zeros(np.shape(self.data))
+class SimpleNormalize(Transformation):
 
-    def getOutput(self):
-        return self.output
-    
-    def getData(self):
-        return self.data
+    def __init__(self, method='median', value=1, datatype=DataTypes.Phase):
+        self.method = method
+        self.value = value
+        self.datatype = datatype
 
-    def bg_polyfit(self, xorder = int(1), yorder = int(1), datatype = DataTypes.Phase):
-        Z = copy.deepcopy(self.data)
-        x = list(range(0, self.data.shape[0]))
-        y = list(range(0, self.data.shape[1]))
+    def transform(self, data):
+        match self.method:
+            case 'median':
+                if self.datatype == DataTypes.Amplitude:
+                    return data / np.median(data)
+                else:
+                    return data - np.median(data)
+            case 'mean':
+                if self.datatype == DataTypes.Amplitude:
+                    return data / np.mean(data)
+                else:
+                    return data - np.mean(data)
+            case 'manual':
+                if self.datatype == DataTypes.Amplitude:
+                    return data / self.value
+                else:
+                    return data - self.value
+                
+class BackgroundPolyFit(Transformation, xorder = int(1), yorder = int(1), datatype = DataTypes.Phase):
+
+    def __init__(self, xorder=int(1), yorder=int(1), datatype=DataTypes.Phase):
+        self.xorder = xorder
+        self.yorder = yorder
+        self.datatype = datatype
+        
+    def transform(self, data):
+        Z = copy.deepcopy(data)
+        x = list(range(0, Z.shape[0]))
+        y = list(range(0, Z.shape[1]))
         X, Y = np.meshgrid(x, y)
         x, y = X.ravel(), Y.ravel()
 
@@ -177,50 +213,14 @@ class Process:
                     basis.append(x**j * y**i)
             return basis
 
-        basis = get_basis(x, y, xorder, yorder)
+        basis = get_basis(x, y, self.xorder, self.yorder)
         A = np.vstack(basis).T
         b = Z.ravel()
         c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
-        background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, xorder, yorder)).reshape(len(basis), *X.shape),
-                            axis=0)
+        background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
 
-        if datatype == DataTypes["Amplitude"]:
-            self.output = Z/background
+        if self.datatype == DataTypes["Amplitude"]:
+            return Z/background, background
         else:
-            self.output = Z-background
-
-        return self.output, background
-
-    def rotate_phase(self, amplitudedata = None, degree = 90.0):
-        # Construct complex dataset
-        complexdata = amplitudedata * np.exp(self.data*complex(1j))
-        # Rotate and extract phase
-        self.output = np.angle(complexdata*np.exp(np.deg2rad(degree)*complex(1j)))
-
-        return self.output
-
-    def self_reference(self, refdata = None, datatype = DataTypes.Phase):
-        if datatype == DataTypes.Amplitude:
-            self.output = np.divide(self.data, refdata)
-        elif datatype == DataTypes.Phase:
-            self.output = self.data-refdata
-        else:
-            print("Self-referencing makes only sense for amplitude or phase data")
-
-        return self.output
-
-    def normalize_simple(self, method='median', value=1, datatype = DataTypes.Phase):
-        self.output = np.zeros(np.shape(self.data))
-        match method:
-            case 'median':
-                if datatype == DataTypes.Amplitude:
-                    self.output = self.data / np.median(self.data)
-                else:
-                    self.output = self.data - np.median(self.data)
-            case 'manual':
-                if datatype == DataTypes.Amplitude:
-                    self.output = self.data / value
-                else:
-                    self.output = self.data - value
-        return self.output
+            return Z-background, background

@@ -59,20 +59,16 @@ class Measurement:
         channeldata = self.extract_channel(channelname)
         singleimage = Image(filename = self.filename, data = channeldata, mode = self.mode, channel = channelname, info = self.info)
 
-        # channeldata = self.extract_channel(channelname)
-        # singleimage.setImageParameters(channeldata)
-        # singleimage.setChannel(channelname=channelname)
-
         return singleimage
 
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, filename = None, data = None, mode = "AFM", channelname = 'Z raw', order = 0, datatype = DataTypes['Topography']):
+    def __init__(self, filename = None, data = None, mode = "AFM", channelname = 'Z raw', order = int(0), datatype = DataTypes['Topography']):
         super().__init__()
         # Describing channel and datatype
         self.channel = channelname # Full channel name
-        self.order = order   # Order, nth
+        self.order = int(order)   # Order, nth
         self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
         self.data = data # Actual data, this case it is only a single channel
 

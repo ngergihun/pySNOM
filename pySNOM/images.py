@@ -1,7 +1,8 @@
 import numpy as np
 import copy
 from enum import Enum
-import pySNOM.defaults as defaults
+from pySNOM.defaults import Defaults
+from gwyfile.objects import GwyDataField
 
 MeasurementModes = Enum('MeasurementModes', ['None','AFM', 'PsHet', 'WLI', 'PTE', 'TappingAFMIR', 'ContactAFM'])
 DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
@@ -10,19 +11,14 @@ ChannelTypes = Enum('ChannelTypes', ['Optical','Mechanical'])
 # Full measurement data containing all the measurement channels
 class Measurement:
     def __init__(self, filename = None, data = None, info = None, mode = "None"):
-        self.filename = filename  # Full path with name
-        # Measurement mode (PTE, PSHet, AFM, NanoFTIR) - Enum MeasurementModes
-        self.mode = MeasurementModes[mode]
-        # Full data from the gwy files with all the channels
+        self.filename = filename # Full path with name
+        self.mode = mode # Measurement mode (PTE, PSHet, AFM, NanoFTIR) - Enum MeasurementModes
         self._data = data # All channels - Dictionary
-        # Other parameters from info txt -  Dictionary
-        if info is not None:
-            self.setParameters(info)
-        else:
-            self._info = info
+        self.info = info
 
     @property
     def mode(self):
+        """Property - measurement mode (Enum)"""
         return self._mode
     @mode.setter
     def mode(self, value: str):
@@ -34,97 +30,95 @@ class Measurement:
 
     @property
     def data(self):
+        """Property - data (dict with GwyDataFields)"""
         return self._data
     @data.setter
     def data(self, data: dict):
         self._data = data
 
-    # @property
-    # def info(self):
-    #     re
+    @property
+    def info(self):
+        """Property - info (dictionary)"""
+        return self._info
+    
+    @info.setter
+    def info(self, info):
+        self._info = info
+        if not info == None:
+            m = self._info["Scan"]
+            self.mode = Defaults.image_mode_defs[m]
 
-# METHODS --------------------------------------------------------------------------------------
-    # Method to retrieve e specific channel from all the measurement channels
-    def get_channel(self, channelname: str):
+    # METHODS --------------------------------------------------------------------------------------
+    def extract_channel(self, channelname: str):
+        """Returns a single data channel as GwyDataField"""
         channel = self.data[channelname]
         return channel
-    
-    # Method to set the additional informations about the measurement from the neaspec info txt
-    def setParameters(self, infodict: dict):
-        self.info = infodict
-        self.setMeasurementModeFromParameters()
-    
-    # Method to set the 
-    def setMeasurementModeFromParameters(self):
-        if self.parameters == None:
-            print('Load the info file first')
-        else:
-            m = self.parameters["Scan"]
-            self.mode = defaults.image_mode_defs[m]
 
-    def getImageChannel(self, channelname: str):
-        singleimage = Image()
+    def image_from_channel(self, channelname: str):
+        """Returns a single Image object with the requred channeldata"""
+        channeldata = self.extract_channel(channelname)
+        singleimage = Image(filename = self.filename, data = channeldata, mode = self.mode, channel = channelname, info = self.info)
 
-        singleimage.filename = self.filename
-        singleimage.mode = self.mode
-        singleimage.parameters = self.parameters
-        singleimage.channel = channelname
-
-        channeldata = self.getChannelData(channelname)
-        singleimage.setImageParameters(channeldata)
-        singleimage.setChannel(channelname=channelname)
+        # channeldata = self.extract_channel(channelname)
+        # singleimage.setImageParameters(channeldata)
+        # singleimage.setChannel(channelname=channelname)
 
         return singleimage
 
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, channeldata = None) -> None:
+    def __init__(self, filename = None, data = None, mode = "AFM", channelname = 'Z raw', order = 0, datatype = DataTypes['Topography']):
         super().__init__()
         # Describing channel and datatype
-        self.channel = None # Full channel name
-        self.order = None   # Order, nth
-        self.datatype = None # Amplitude, Phase, Topography - Enum DataTypes
-        # Important measurement parameters from gwyddion fields
-        self.xreal = None   # Physical image width
-        self.yreal = None   # Physical image height
-        self.xoff = None    # Center position X
-        self.yoff = None    # Center position Y
-        self.xres = None    # Pixel size in X
-        self.yres = None    # Pixel size in Y
-        # Overwrite the data definition of parent class
-        self.data = None # Actual data, this case it is only a single channel
+        self.channel = channelname # Full channel name
+        self.order = order   # Order, nth
+        self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
+        self.data = data # Actual data, this case it is only a single channel
 
-        if channeldata:
-            self.setImageParameters(channeldata)
-
-    # Method to set the actual data (numpy array) - overwrite parent class method
-    def setData(self, data):
+    @property
+    def data(self):
+        """Property - data (numpy array)"""
         # Set the data
-        self.data = data
-        
-    def getData(self):
-        # Set the data
-        return self.data
+        return self._data
     
-    def setChannel(self, channelname):
-        self.channel = channelname
-        self.order = int(self.channel[1])
+    @data.setter
+    def data(self, value):
+        # Set the data and the corresponding image attributes
+        if value is GwyDataField:
+            self._data = value.data
+            self._xres, self._yres = np.shape(value.data)
+            self._xoff = value.xoff
+            self._yoff = value.yoff
+            self._xreal = value.xreal
+            self._yreal = value.yreal
+        elif value is np.ndarray:
+            self._data = value
+            self._xres, self._yres = np.shape(value.data)
+            self._xoff = 0
+            self._yoff = 0
+            self._xreal = 1
+            self._yreal = 1
+        else:
+            self._data = None
 
-        if self.channel[2] == 'P':
+    @property
+    def channel(self):
+        """Property - channel (string)"""
+        return self._channel
+    
+    @channel.setter
+    def channel(self,value):
+
+        self._channel = value
+        self.order = int(value[1])
+    
+        if value[2] == 'P':
             self.datatype = DataTypes["Phase"]
-        elif 'Z' in self.channel:
+        elif 'Z' in value:
             self.datatype = DataTypes["Topography"]
         else:
             self.datatype = DataTypes["Amplitude"]
-
-    def setImageParameters(self, singlechannel):
-        # Set the basic attributes from gwyddion field
-        for key in singlechannel:
-            if key in dir(self):
-                setattr(self, key, singlechannel[key])
-        self.setData(data=singlechannel.data)
-
 
 class Transformation:
 

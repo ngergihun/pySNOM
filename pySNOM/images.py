@@ -103,7 +103,7 @@ class Image(Measurement):
         else:
             self.datatype = DataTypes["Amplitude"]
 
-class NeaImage(Image):
+class GwyImage(Image):
     def __init__(self, filename=None, data=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
         super().__init__(filename, data, mode, channelname, order, datatype)
     

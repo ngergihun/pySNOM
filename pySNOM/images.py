@@ -32,9 +32,6 @@ class Measurement:
     def data(self):
         """Property - data (dict with GwyDataFields)"""
         return self._data
-    @data.setter
-    def data(self, data: dict):
-        self._data = data
 
     @property
     def info(self):
@@ -70,33 +67,23 @@ class Image(Measurement):
         self.channel = channelname # Full channel name
         self.order = int(order)   # Order, nth
         self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
-        self.data = data # Actual data, this case it is only a single channel
+        self._data = data # Actual data, this case it is only a single channel
 
-    @property
-    def data(self):
-        """Property - data (numpy array)"""
-        # Set the data
-        return self._data
-    
-    @data.setter
-    def data(self, value):
-        # Set the data and the corresponding image attributes
-        if value is GwyDataField:
-            self._data = value.data
-            self._xres, self._yres = np.shape(value.data)
-            self._xoff = value.xoff
-            self._yoff = value.yoff
-            self._xreal = value.xreal
-            self._yreal = value.yreal
-        elif value is np.ndarray:
-            self._data = value
-            self._xres, self._yres = np.shape(value.data)
+        if data is np.ndarray:
+            self._data = data
+            self._xres, self._yres = np.shape(data)
             self._xoff = 0
             self._yoff = 0
             self._xreal = 1
             self._yreal = 1
         else:
             self._data = None
+
+    @property
+    def data(self):
+        """Property - data (numpy array)"""
+        # Set the data
+        return self._data
 
     @property
     def channel(self):
@@ -115,6 +102,26 @@ class Image(Measurement):
             self.datatype = DataTypes["Topography"]
         else:
             self.datatype = DataTypes["Amplitude"]
+
+class NeaImage(Image):
+    def __init__(self, filename=None, data=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
+        super().__init__(filename, data, mode, channelname, order, datatype)
+    
+        if data is GwyDataField:
+            self._data = data.data
+            self._xres, self._yres = np.shape(data.data)
+            self._xoff = data.xoff
+            self._yoff = data.yoff
+            self._xreal = data.xreal
+            self._yreal = data.yreal
+        else:
+            self._data = None
+
+    @property
+    def data(self):
+        """Property - data (numpy array)"""
+        # Set the data
+        return self._data
 
 class Transformation:
 

@@ -10,7 +10,7 @@ ChannelTypes = Enum('ChannelTypes', ['Optical','Mechanical'])
 
 # Full measurement data containing all the measurement channels
 class Measurement:
-    def __init__(self, filename = None, data = None, info = None, mode = "None"):
+    def __init__(self, data, filename=None, info=None, mode="None"):
         self.filename = filename # Full path with name
         self.mode = mode # Measurement mode (PTE, PSHet, AFM, NanoFTIR) - Enum MeasurementModes
         self._data = data # All channels - Dictionary
@@ -64,7 +64,7 @@ class Measurement:
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, filename = None, data = None, mode = "AFM", channelname = 'Z raw', order = int(0), datatype = DataTypes['Topography']):
+    def __init__(self, filename=None, data=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
         super().__init__()
         # Describing channel and datatype
         self.channel = channelname # Full channel name
@@ -131,7 +131,7 @@ class LineLevel(Transformation):
     def transform(self, data):
         if self.method == 'median':
             norm = np.median(data, axis=1, keepdims=True)
-        elif self.method == 'average':
+        elif self.method == 'mean':
             norm = np.mean(data, axis=1, keepdims=True)
         elif self.method == 'difference':
             if self.datatype == DataTypes.Amplitude:
@@ -150,25 +150,24 @@ class RotatePhase(Transformation):
     def __init__(self, degree=90.0):
         self.degree = degree
 
-    def transform(self, amplitudedata, phasedata):
+    def transform(self, data):
         # Construct complex dataset
-        complexdata = amplitudedata * np.exp(phasedata*complex(1j))
+        complexdata = np.exp(data*complex(1j))
         # Rotate and extract phase
         return np.angle(complexdata*np.exp(np.deg2rad(self.degree)*complex(1j)))
 
 class SelfReference(Transformation):
 
-    def __init__(self, datatype=DataTypes.Phase):
+    def __init__(self, referencedata=1, datatype=DataTypes.Phase):
         self.datatype = datatype
-
-    def transform(self, data, referencedata):
+        self.referencedata = referencedata
+    def transform(self, data):
         if self.datatype == DataTypes.Amplitude:
-            return np.divide(data, referencedata)
+            return np.divide(data, self.referencedata)
         elif self.datatype == DataTypes.Phase:
-            return data-referencedata
+            return data-self.referencedata
         else:
-            # TODO: We should replace this with a datatype error raise
-            print("Self-referencing makes only sense for amplitude or phase data")
+            raise RuntimeError("Self-referencing makes only sense for amplitude or phase data")
 
 class SimpleNormalize(Transformation):
 
@@ -181,23 +180,23 @@ class SimpleNormalize(Transformation):
         match self.method:
             case 'median':
                 if self.datatype == DataTypes.Amplitude:
-                    return data / np.median(data)
+                    return np.divide(data, np.median(data))
                 else:
                     return data - np.median(data)
             case 'mean':
                 if self.datatype == DataTypes.Amplitude:
-                    return data / np.mean(data)
+                    return np.divide(data, np.mean(data))
                 else:
                     return data - np.mean(data)
             case 'manual':
                 if self.datatype == DataTypes.Amplitude:
-                    return data / self.value
+                    return np.divide(data, self.value)
                 else:
                     return data - self.value
                 
 class BackgroundPolyFit(Transformation):
 
-    def __init__(self, xorder=int(1), yorder=int(1), datatype=DataTypes.Phase):
+    def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = xorder
         self.yorder = yorder
         self.datatype = datatype
@@ -226,6 +225,6 @@ class BackgroundPolyFit(Transformation):
         background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
 
         if self.datatype == DataTypes["Amplitude"]:
-            return Z/background, background
+            return np.divide(Z, background), background
         else:
             return Z-background, background

@@ -22,12 +22,12 @@ class TestLineLevel(unittest.TestCase):
 
     def test_mean(self):
         d = np.arange(12).reshape(3, -1)[:, [0, 1, 3]]
-        l = LineLevel(method="average", datatype=DataTypes.Phase)
+        l = LineLevel(method="mean", datatype=DataTypes.Phase)
         out = l.transform(d)
         np.testing.assert_almost_equal(out, [[-1.3333333, -0.3333333,  1.6666667],
                                              [-1.3333333, -0.3333333,  1.6666667],
                                              [-1.3333333, -0.3333333,  1.6666667]])
-        l = LineLevel(method="average", datatype=DataTypes.Amplitude)
+        l = LineLevel(method="mean", datatype=DataTypes.Amplitude)
         out = l.transform(d)
         np.testing.assert_almost_equal(out, [[0.       , 0.75     , 2.25     ],
                                              [0.75     , 0.9375   , 1.3125   ],

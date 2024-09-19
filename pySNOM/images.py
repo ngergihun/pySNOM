@@ -61,23 +61,19 @@ class Measurement:
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, filename=None, data=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
+    def __init__(self, data=None, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
         super().__init__()
         # Describing channel and datatype
         self.channel = channelname # Full channel name
         self.order = int(order)   # Order, nth
         self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
-        self._data = data # Actual data, this case it is only a single channel
-
-        if data is np.ndarray:
-            self._data = data
-            self._xres, self._yres = np.shape(data)
-            self._xoff = 0
-            self._yoff = 0
-            self._xreal = 1
-            self._yreal = 1
-        else:
-            self._data = None
+        
+        self._data = data
+        self._xres, self._yres = np.shape(data)
+        self._xoff = 0
+        self._yoff = 0
+        self._xreal = 1
+        self._yreal = 1
 
     @property
     def data(self):
@@ -104,18 +100,15 @@ class Image(Measurement):
             self.datatype = DataTypes["Amplitude"]
 
 class GwyImage(Image):
-    def __init__(self, filename=None, data=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
+    def __init__(self, data=None, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
         super().__init__(filename, data, mode, channelname, order, datatype)
     
-        if data is GwyDataField:
-            self._data = data.data
-            self._xres, self._yres = np.shape(data.data)
-            self._xoff = data.xoff
-            self._yoff = data.yoff
-            self._xreal = data.xreal
-            self._yreal = data.yreal
-        else:
-            self._data = None
+        self._data = data.data
+        self._xres, self._yres = np.shape(data.data)
+        self._xoff = data.xoff
+        self._yoff = data.yoff
+        self._xreal = data.xreal
+        self._yreal = data.yreal
 
     @property
     def data(self):

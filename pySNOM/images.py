@@ -139,6 +139,11 @@ class LineLevel(Transformation):
             else:
                 norm = np.median(data[1:] - data[:-1], axis=1, keepdims=True)
             data = data[:-1]  # difference does not make sense for the last row
+        else:
+            if self.datatype == DataTypes.Amplitude:
+                norm = 1
+            else:
+                norm = 0
 
         if self.datatype == DataTypes.Amplitude:
             return data / norm

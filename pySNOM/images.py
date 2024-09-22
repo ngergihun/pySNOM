@@ -6,7 +6,7 @@ from gwyfile.objects import GwyDataField
 
 MeasurementModes = Enum('MeasurementModes', ['None','AFM', 'PsHet', 'WLI', 'PTE', 'TappingAFMIR', 'ContactAFM'])
 DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
-ChannelTypes = Enum('ChannelTypes', ['Optical','Mechanical'])
+ChannelTypes = Enum('ChannelTypes', ['None','Optical','Mechanical'])
 
 # Full measurement data containing all the measurement channels
 class Measurement:
@@ -43,7 +43,7 @@ class Measurement:
         self._info = info
         if not info == None:
             m = self._info["Scan"]
-            self.mode = Defaults.image_mode_defs[m]
+            self.mode = Defaults().image_mode_defs[m]
 
     # METHODS --------------------------------------------------------------------------------------
     def extract_channel(self, channelname: str):
@@ -54,32 +54,37 @@ class Measurement:
     def image_from_channel(self, channelname: str):
         """Returns a single Image object with the requred channeldata"""
         channeldata = self.extract_channel(channelname)
-        singleimage = Image(filename = self.filename, data = channeldata, mode = self.mode, channel = channelname, info = self.info)
+        singleimage = GwyImage(channeldata, filename = self.filename, mode = self.mode, channel = channelname, info = self.info)
 
         return singleimage
 
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, data=None, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
-        super().__init__()
+    def __init__(self, data, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography'], info=None):
+        super().__init__(data, filename, info=info, mode=mode)
         # Describing channel and datatype
         self.channel = channelname # Full channel name
         self.order = int(order)   # Order, nth
         self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
         
-        self._data = data
-        self._xres, self._yres = np.shape(data)
-        self._xoff = 0
-        self._yoff = 0
-        self._xreal = 1
-        self._yreal = 1
+        self.data = data
+        self.xoff = 0
+        self.yoff = 0
+        self.xreal = 1
+        self.yreal = 1
 
     @property
     def data(self):
         """Property - data (numpy array)"""
         # Set the data
         return self._data
+    
+    @data.setter
+    def data(self, new_data):
+        """Setter for data (optional if you want data to be modifiable later)"""
+        self._data = new_data
+        self.xres, self.yres = np.shape(new_data)
 
     @property
     def channel(self):
@@ -90,31 +95,52 @@ class Image(Measurement):
     def channel(self,value):
 
         self._channel = value
-        self.order = int(value[1])
-    
-        if value[2] == 'P':
-            self.datatype = DataTypes["Phase"]
-        elif 'Z' in value:
-            self.datatype = DataTypes["Topography"]
-        else:
-            self.datatype = DataTypes["Amplitude"]
+        self.channeltype, self.order, self.datatype = type_from_channelname(value)
 
 class GwyImage(Image):
-    def __init__(self, data=None, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography']):
-        super().__init__(filename, data, mode, channelname, order, datatype)
+    def __init__(self, data, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography'], info=None):
+        super().__init__(data, filename=filename, mode=mode, channelname=channelname, order=order, datatype=datatype, info=info)
     
-        self._data = data.data
-        self._xres, self._yres = np.shape(data.data)
-        self._xoff = data.xoff
-        self._yoff = data.yoff
-        self._xreal = data.xreal
-        self._yreal = data.yreal
+        self.data = data.data
+        self.xoff = data.xoff
+        self.yoff = data.yoff
+        self.xreal = data.xreal
+        self.yreal = data.yreal
 
     @property
     def data(self):
         """Property - data (numpy array)"""
         # Set the data
         return self._data
+    
+    @data.setter
+    def data(self,data):
+        self._data = getattr(data, 'data', None)
+        self.xres, self.yres = np.shape(self._data)
+        if self._data is None:
+            raise ValueError("The provided data object does not contain 'data' attribute")
+
+def type_from_channelname(channelname):
+    if channelname[0] == 'O':
+        channeltype = ChannelTypes["Optical"]
+    elif 'M' in channelname:
+        channeltype = ChannelTypes["Mechanical"]
+    else:
+        channeltype = ChannelTypes["None"]
+
+    if 'Z' in channelname:
+        order = 0
+    else:
+        order = int(channelname[1])
+    
+    if channelname[2] == 'A':
+        datatype = DataTypes["Amplitude"]
+    elif 'Z' in channelname:
+        datatype = DataTypes["Topography"]
+    else:
+        datatype = DataTypes["Phase"]
+
+    return channeltype, order, datatype
 
 class Transformation:
 

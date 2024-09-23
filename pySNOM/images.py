@@ -101,7 +101,7 @@ class GwyImage(Image):
     def __init__(self, data, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography'], info=None):
         super().__init__(data, filename=filename, mode=mode, channelname=channelname, order=order, datatype=datatype, info=info)
     
-        self.data = data.data
+        self.data = data
         self.xoff = data.xoff
         self.yoff = data.yoff
         self.xreal = data.xreal
@@ -114,8 +114,8 @@ class GwyImage(Image):
         return self._data
     
     @data.setter
-    def data(self,data):
-        self._data = getattr(data, 'data', None)
+    def data(self,value):
+        self._data = value.data
         self.xres, self.yres = np.shape(self._data)
         if self._data is None:
             raise ValueError("The provided data object does not contain 'data' attribute")
@@ -178,7 +178,7 @@ class LineLevel(Transformation):
 
 class RotatePhase(Transformation):
 
-    def __init__(self, degree=90.0):
+    def __init__(self, degree=0.0):
         self.degree = degree
 
     def transform(self, data):
@@ -228,14 +228,14 @@ class SimpleNormalize(Transformation):
 class BackgroundPolyFit(Transformation):
 
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
-        self.xorder = xorder
-        self.yorder = yorder
+        self.xorder = int(xorder)
+        self.yorder = int(yorder)
         self.datatype = datatype
         
     def transform(self, data):
         Z = copy.deepcopy(data)
-        x = list(range(0, Z.shape[0]))
-        y = list(range(0, Z.shape[1]))
+        x = list(range(0, Z.shape[1]))
+        y = list(range(0, Z.shape[0]))
         X, Y = np.meshgrid(x, y)
         x, y = X.ravel(), Y.ravel()
 

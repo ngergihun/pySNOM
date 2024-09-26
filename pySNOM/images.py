@@ -156,14 +156,14 @@ class LineLevel(Transformation):
 
     def transform(self, data):
         if self.method == 'median':
-            norm = np.median(data, axis=1, keepdims=True)
+            norm = np.nanmedian(data, axis=1, keepdims=True)
         elif self.method == 'mean':
-            norm = np.mean(data, axis=1, keepdims=True)
+            norm = np.nanmean(data, axis=1, keepdims=True)
         elif self.method == 'difference':
             if self.datatype == DataTypes.Amplitude:
-                norm = np.median(data[1:] / data[:-1], axis=1, keepdims=True)
+                norm = np.nanmedian(data[1:] / data[:-1], axis=1, keepdims=True)
             else:
-                norm = np.median(data[1:] - data[:-1], axis=1, keepdims=True)
+                norm = np.nanmedian(data[1:] - data[:-1], axis=1, keepdims=True)
             data = data[:-1]  # difference does not make sense for the last row
         else:
             if self.datatype == DataTypes.Amplitude:

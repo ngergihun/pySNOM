@@ -264,6 +264,6 @@ class BackgroundPolyFit(Transformation):
                 print("X and Y order must be integer!")
 
         if self.datatype == DataTypes["Amplitude"]:
-            return Z, background / background
+            return Z / background, background
         else:
             return Z-background, background

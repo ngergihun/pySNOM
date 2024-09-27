@@ -194,9 +194,9 @@ class SelfReference(Transformation):
         self.referencedata = referencedata
     def transform(self, data):
         if self.datatype == DataTypes.Amplitude:
-            return np.divide(data, self.referencedata)
+            return data / self.referencedata
         elif self.datatype == DataTypes.Phase:
-            return data-self.referencedata
+            return data - self.referencedata
         else:
             raise RuntimeError("Self-referencing makes only sense for amplitude or phase data")
 
@@ -211,17 +211,17 @@ class SimpleNormalize(Transformation):
         match self.method:
             case 'median':
                 if self.datatype == DataTypes.Amplitude:
-                    return np.divide(data, np.median(data))
+                    return data / np.nanmedian(data)
                 else:
-                    return data - np.median(data)
+                    return data - np.nanmedian(data)
             case 'mean':
                 if self.datatype == DataTypes.Amplitude:
-                    return np.divide(data, np.mean(data))
+                    return data / np.nanmean(data)
                 else:
-                    return data - np.mean(data)
+                    return data - np.nanmean(data)
             case 'manual':
                 if self.datatype == DataTypes.Amplitude:
-                    return np.divide(data, self.value)
+                    return data / self.value
                 else:
                     return data - self.value
                 
@@ -238,6 +238,11 @@ class BackgroundPolyFit(Transformation):
         y = list(range(0, Z.shape[0]))
         X, Y = np.meshgrid(x, y)
         x, y = X.ravel(), Y.ravel()
+        b = Z.ravel()
+        notnanidxs = np.argwhere(~np.isnan(b))
+        b = np.ravel(b[notnanidxs])
+        x = np.ravel(x[notnanidxs])
+        y = np.ravel(y[notnanidxs])
 
         def get_basis(x, y, max_order_x=1, max_order_y=1):
             """Return the fit basis polynomials: 1, x, x^2, ..., xy, x^2y, ... etc."""
@@ -248,14 +253,17 @@ class BackgroundPolyFit(Transformation):
                     basis.append(x**j * y**i)
             return basis
 
-        basis = get_basis(x, y, self.xorder, self.yorder)
-        A = np.vstack(basis).T
-        b = Z.ravel()
-        c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
+        try:
+            basis = get_basis(x, y, self.xorder, self.yorder)
+            A = np.vstack(basis).T
+            c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
-        background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
+            background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
+        except ValueError:
+                background = np.ones(np.shape(data))
+                print("X and Y order must be integer!")
 
         if self.datatype == DataTypes["Amplitude"]:
-            return np.divide(Z, background), background
+            return Z, background / background
         else:
             return Z-background, background

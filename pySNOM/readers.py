@@ -155,17 +155,9 @@ class NeaSpectrumReader(Reader):
         else:
             C_data = np.genfromtxt(self.filename, skip_header=Nlines)
 
-        for i in range(len(channels)-2):
-            if params['PixelArea'][1] == 1 and params['PixelArea'][0] == 1:
-                if "PTE+" in params['Scan']:
-                    data[channels[i]] = np.reshape(C_data[:,i], (params['PixelArea'][2]))
-                else:
-                    data[channels[i]] = np.reshape(C_data[:,i], (params['PixelArea'][2]*2))
-            else:
-                if "PTE+" in params['Scan']:
-                    data[channels[i]] = np.reshape(C_data[:,i], (params['PixelArea'][0], params['PixelArea'][1], params['PixelArea'][2]))
-                else:
-                    data[channels[i]] = np.reshape(C_data[:,i], (params['PixelArea'][0], params['PixelArea'][1], params['PixelArea'][2]*2))
+        for i in range(len(channels)-1):
+            data[channels[i]] = C_data[:,i]
+
         return data, params
     
 class NeaInterferogramReader(Reader):
@@ -232,10 +224,7 @@ class NeaInterferogramReader(Reader):
 
         C_data = np.genfromtxt(self.filename, skip_header=Nlines)
 
-        for i in range(len(channels)-2):
-            if params['PixelArea'][1] == 1 and params['PixelArea'][0] == 1:
-                data[channels[i]] = C_data[:,i]
-            else:
-                data[channels[i]] = np.reshape(C_data[:,i], (int(params['PixelArea'][0]), int(params['PixelArea'][1]), int(params['PixelArea'][2]*params['Averaging'])))
+        for i in range(len(channels)-1):
+            data[channels[i]] = C_data[:,i]
         
         return data, params

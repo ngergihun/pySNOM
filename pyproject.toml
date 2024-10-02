@@ -8,7 +8,8 @@ requires-python = ">=3.10"
 dynamic = ["dependencies", "version"]
 authors = [
   {name = "Gergely Németh", email = "ngergihun@gmail.com"},
-  {name = "Ferenc Borondics", email = "ferenc.borondics@synchrotron-soleil.fr"},
+  {name = "Ferenc Borondics", email = "borondics.accounts@gmail.com"},
+  {name = "Marko Toplak", email = "marko.toplak@gmail.com"},
 ]
 maintainers = [
   {name = "Gergely Németh", email = "ngergihun@gmail.com"}
@@ -19,9 +20,9 @@ license = {file = "LICENSE"}
 keywords = ["snom", "near-field", "data processing"]
 
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "Programming Language :: Python"
+  "Programming Language :: Python :: 3"
 ]
 
 [tool.setuptools.packages.find]
@@ -31,3 +32,8 @@ include = ["*"]
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 version = {attr = "pySNOM.__version__"}
+
+[project.urls]
+"Homepage" = "https://github.com/Quasars/pySNOM"
+"Bug Reports" = "https://github.com/Quasars/pySNOM/issues"
+"Source" = "https://github.com/Quasars/pySNOM/"

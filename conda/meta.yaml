@@ -1,0 +1,43 @@
+{% set version = "0.1.0" %}
+
+package:
+  name: pysnom
+  version: {{ version }}
+
+source:
+  git_url: ../
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
+
+requirements:
+  build:
+    - python >=3.10
+    - setuptools
+    - setuptools_scm
+  run:
+    - python >=3.10
+    - numpy <2.0.0
+    - agilent-format>=0.4.5
+    - gwyfile >=0.2.0
+    - scipy
+    - gsffile
+
+test:
+  imports:
+    - pySNOM
+  commands:
+    - python -m unittest pySNOM.tests
+
+about:
+  home: https://github.com/quasars/pySNOM
+  license:  'CC BY-NC-SA 4.0'
+  license_family: 'CC'
+  summary: 'pySNOM'
+
+extra:
+  recipe-maintainers:
+    - markotoplak

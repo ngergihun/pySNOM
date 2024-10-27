@@ -37,3 +37,10 @@ version = {attr = "pySNOM.__version__"}
 "Homepage" = "https://github.com/Quasars/pySNOM"
 "Bug Reports" = "https://github.com/Quasars/pySNOM/issues"
 "Source" = "https://github.com/Quasars/pySNOM/"
+
+[project.optional-dependencies]
+docs = [
+  "sphinx",
+  "myst-parser",
+  "sphinx-rtd-theme",
+]

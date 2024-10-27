@@ -4,6 +4,11 @@ from enum import Enum
 from pySNOM.defaults import Defaults
 from gwyfile.objects import GwyDataField
 
+from skimage.transform import warp
+from skimage.registration import optical_flow_tvl1
+from skimage.registration import phase_cross_correlation
+from scipy.ndimage import fourier_shift
+
 MeasurementModes = Enum('MeasurementModes', ['None','AFM', 'PsHet', 'WLI', 'PTE', 'TappingAFMIR', 'ContactAFM'])
 DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
 ChannelTypes = Enum('ChannelTypes', ['None','Optical','Mechanical'])
@@ -267,3 +272,41 @@ class BackgroundPolyFit(Transformation):
             return Z / background, background
         else:
             return Z-background, background
+        
+class CalculateOpticalFlow(Transformation):
+    """ Calculates the pixel coordiate drifts between reference and template image"""
+    def __init__(self, image_ref):
+        self.image_ref = image_ref
+
+    def transform(self, image):
+        v, u = optical_flow_tvl1(self.image_ref/np.nanmax(self.image_ref), image/np.nanmax(image))
+        return v,u
+    
+class WrapImage(Transformation):
+    """ Applies the pixel-by-pixel drift correction calculated by OpticalFlow"""
+    def __init__(self, v, u):
+        self.v = v
+        self.u = u
+
+    def transform(self, image):
+        nr, nc = image.shape
+        row_coords, col_coords = np.meshgrid(np.arange(nr), np.arange(nc), indexing='ij')
+        return warp(image, np.array([row_coords + self.v, col_coords + self.u]), mode='edge')
+    
+class CalculateXCorrDrift(Transformation):
+    """ Calculates the drift between reference and template image"""
+    def __init__(self, image_ref):
+        self.image_ref = image_ref
+
+    def transform(self, image):
+        shift, _, _ = phase_cross_correlation(self.image_ref, image)
+        return shift
+    
+class CorrectImageDrift(Transformation):
+    def __init__(self, shift):
+        self.shift = shift
+
+    def transform(self, image):
+        offset_phase = fourier_shift(np.fft.fftn(image), self.shift)
+        offset_phase = np.fft.ifftn(offset_phase)
+        return offset_phase.real

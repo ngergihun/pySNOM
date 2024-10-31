@@ -200,8 +200,12 @@ class LineLevel(Transformation):
         self.method = method
         self.datatype = datatype
 
-    def calculate(self, data, mask):
-        data = data*mask
+    def calculate(self, data, mask = None):
+        if mask is not None:
+            data = mask*data
+        else:
+            pass
+
         if self.method == 'median':
             norm = np.nanmedian(data, axis=1, keepdims=True)
         elif self.method == "mean":

@@ -150,6 +150,9 @@ def type_from_channelname(channelname):
 
 class Transformation:
 
+    def calculate(self, data):
+        raise NotImplementedError()
+
     def transform(self, data):
         raise NotImplementedError()
 
@@ -160,7 +163,8 @@ class LineLevel(Transformation):
         self.method = method
         self.datatype = datatype
 
-    def transform(self, data):
+    def calculate(self, data, mask):
+        data = data*mask
         if self.method == 'median':
             norm = np.nanmedian(data, axis=1, keepdims=True)
         elif self.method == 'mean':
@@ -177,10 +181,14 @@ class LineLevel(Transformation):
             else:
                 norm = 0
 
+        return norm
+
+    def transform(self, data, correction):
+
         if self.datatype == DataTypes.Amplitude:
-            return data / norm
+            return data / correction
         else:
-            return data - norm
+            return data - correction
 
 class RotatePhase(Transformation):
 

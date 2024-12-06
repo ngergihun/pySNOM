@@ -166,8 +166,6 @@ class LineLevel(Transformation):
     def calculate(self, data, mask = None):
         if mask is not None:
             data = mask*data
-        else:
-            pass
 
         if self.method == 'median':
             norm = np.nanmedian(data, axis=1, keepdims=True)
@@ -210,6 +208,7 @@ class SelfReference(Transformation):
     def __init__(self, referencedata=1, datatype=DataTypes.Phase):
         self.datatype = datatype
         self.referencedata = referencedata
+
     def transform(self, data):
         if self.datatype == DataTypes.Amplitude:
             return data / self.referencedata
@@ -254,8 +253,11 @@ class BackgroundPolyFit(Transformation):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
         self.datatype = datatype
-        
-    def transform(self, data):
+
+    def calculate(self, data, mask = None):
+        if mask is not None:
+            data = mask*data
+
         Z = copy.deepcopy(data)
         x = list(range(0, Z.shape[1]))
         y = list(range(0, Z.shape[0]))
@@ -282,11 +284,16 @@ class BackgroundPolyFit(Transformation):
             c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
             background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
+            
         except ValueError:
-                background = np.ones(np.shape(data))
-                print("X and Y order must be integer!")
+            background = np.ones(np.shape(data))
+            print("X and Y order must be integer!")
+
+        return background
+        
+    def transform(self, data, correction):
 
         if self.datatype == DataTypes["Amplitude"]:
-            return Z / background, background
+            return data/correction
         else:
-            return Z-background, background
+            return data-correction

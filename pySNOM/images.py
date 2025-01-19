@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import re
 from enum import Enum
 from pySNOM.defaults import Defaults
 from gwyfile.objects import GwyDataField
@@ -121,21 +122,26 @@ class GwyImage(Image):
             raise ValueError("The provided data object does not contain 'data' attribute")
 
 def type_from_channelname(channelname):
-    if channelname[0] == 'O':
+    channel_strings = ['M(.?)A', 'M(.?)P', 'O(.?)A', 'O(.?)P', 'Z C', 'Z raw']
+    for pattern in channel_strings:
+        if re.search(pattern, channelname) is not None:
+            channel_name = re.search(pattern, channelname)[0]
+
+    if channel_name[0] == 'O':
         channeltype = ChannelTypes["Optical"]
-    elif 'M' in channelname:
+    elif 'M' in channel_name:
         channeltype = ChannelTypes["Mechanical"]
     else:
         channeltype = ChannelTypes["None"]
 
-    if 'Z' in channelname:
+    if 'Z' in channel_name:
         order = 0
     else:
-        order = int(channelname[1])
+        order = int(channel_name[1])
     
-    if channelname[2] == 'A':
+    if channel_name[2] == 'A':
         datatype = DataTypes["Amplitude"]
-    elif 'Z' in channelname:
+    elif 'Z' in channel_name:
         datatype = DataTypes["Topography"]
     else:
         datatype = DataTypes["Phase"]
@@ -224,6 +230,11 @@ class SimpleNormalize(Transformation):
                     return data / self.value
                 else:
                     return data - self.value
+            case 'min':
+                if self.datatype == DataTypes.Amplitude:
+                    return data / np.nanmin(data)
+                else:
+                    return data - np.nanmin(data)
                 
 class BackgroundPolyFit(Transformation):
 

@@ -145,6 +145,34 @@ class RotatePhase(Transformation):
 
         return np.angle(spectrum*np.exp(angles*complex(1j)))
     
+class ShiftPhaseToZero(Transformation):
+    """ 
+    Calculates and applies the phase rotation needed to get a flat, levelled phase spectrum. 
+    Two reference frequencies have to be provided.
+    """
+    def __init__(self, wavenumber1=1000.0, wavenumber2=2200.0):
+        self.wn1 = wavenumber1
+        self.wn2 = wavenumber2
+
+    def transform(self, spectrum, wnaxis):
+        if not np.iscomplex(spectrum).any():
+            spectrum = np.exp(spectrum*complex(1j))
+
+        wn1idx = np.argmin(abs(wnaxis - self.wn1))
+        wn2idx = np.argmin(abs(wnaxis - self.wn2))
+
+        theta1 = np.angle(spectrum[wn1idx])
+        wn1 = wnaxis[wn1idx]
+        spectrum = spectrum*np.exp(-theta1*complex(1j))
+
+        theta2 = np.angle(spectrum[wn2idx])
+        wn2 = wnaxis[wn2idx]
+
+        angles = (wnaxis-wn1) * theta2 / (wn2-wn1)
+        spectrum = np.angle(spectrum*np.exp(-1*angles*complex(1j)))
+
+        return spectrum
+    
 class NormalizeSpectrum(Transformation):
 
     def __init__(self, datatype=DataTypes.Phase, dounwrap=False):

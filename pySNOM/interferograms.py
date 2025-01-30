@@ -115,7 +115,7 @@ class InterpolateInterferogram(Transformation):
                 return ifg, maxis
 
 class ProcessSingleChannel(Transformation):
-    def __init__(self, order, method = "complex", apod = True, windowtype = "blackmanharris", nzeros = 4, interpmethod = "spline", simpleoutput = False):
+    def __init__(self, order, method = "complex", apod = True, windowtype = "blackmanharris", nzeros = 4, interpmethod = "spline", simpleoutput = False, stdoutput=False):
         self.order = order
         self.method = method
         self.windowtype = windowtype
@@ -123,6 +123,7 @@ class ProcessSingleChannel(Transformation):
         self.nzeros = nzeros
         self.interpmethod = interpmethod
         self.simpleoutput = simpleoutput
+        self.stdoutput = stdoutput
 
     def transform(self, neaifg):# Load amplitude and phase of the given channel
             
@@ -165,13 +166,19 @@ class ProcessSingleChannel(Transformation):
                 spectraAll[i,:], fAll[i,:] = ProcessInterferogram(apod = self.apod, windowtype = self.windowtype, nzeros = self.nzeros).transform(IFG[i,:], Maxis[i,:])
             # Average the complex spectra
             complex_spectrum = np.mean(spectraAll, axis = 0)
+            noise_spectrum = np.std(spectraAll, axis = 0)
             # Extract amplitude and phase from the averaged complex spectrum
             amp = np.abs(complex_spectrum)
             phi = np.angle(complex_spectrum)
             f = np.mean(fAll, axis=0)
+            std_amp = np.abs(noise_spectrum)
+            std_phi = np.angle(noise_spectrum)
 
         if self.simpleoutput:
-            return amp, phi, f
+            if self.stdoutput:
+                return amp, phi, f, std_amp, std_phi
+            else:
+                return amp, phi, f
         else:
             spectrum_data = {}
             spectrum_parameters = copy.deepcopy(neaifg.parameters)

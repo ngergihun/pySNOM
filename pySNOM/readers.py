@@ -1,6 +1,7 @@
 import gwyfile
 import gsffile
 import numpy as np
+import pandas as pd
 
 class Reader:
     def __init__(self, fullfilepath=None):
@@ -173,7 +174,7 @@ class NeaInterferogramReader(Reader):
         linestring = fid.readline()
         Nlines = 1
 
-        while 'Row' not in linestring:
+        while 'Version' not in linestring:
             Nlines += 1
             linestring = fid.readline()
             if Nlines > 1:
@@ -219,12 +220,107 @@ class NeaInterferogramReader(Reader):
                     except:
                         params[fieldname] = val.strip()
 
-        channels = linestring.split('\t')
+        if 'Version:' in linestring:
+            linestring = fid.readline()
+            channels = linestring.split('\t')
+            for i, channel in enumerate(channels):
+                channels[i] = channel.split(' ')[0]
+        else:
+            channels = linestring.split('\t')
+
         fid.close()
 
         C_data = np.genfromtxt(self.filename, skip_header=Nlines)
 
         for i in range(len(channels)-1):
-            data[channels[i]] = C_data[:,i]
+            data[channels[i]] = C_data[1:,i]
         
+        return data, params
+    
+class NeaSpectrumGeneralReader(Reader):
+    def __init__(self, fullfilepath=None, output='dict'):
+        super().__init__(fullfilepath)
+        self.output = output
+
+    def lineparser(self,linestring,params:dict):
+
+        ct = linestring.split('\t')
+        fieldname = ct[0][2:-1]
+        fieldname = fieldname.replace(' ', '')
+
+        if 'Scanner Center Position' in linestring:
+            fieldname = fieldname[:-5]
+            params[fieldname] = [float(ct[2]), float(ct[3])]
+
+        elif 'Scan Area' in linestring:
+            fieldname = fieldname[:-7]
+            params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
+
+        elif 'Pixel Area' in linestring:
+            fieldname = fieldname[:-7]
+            params[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
+
+        elif 'Averaging' in linestring:
+            params[fieldname] = int(ct[2])
+
+        elif 'Interferometer Center/Distance' in linestring:
+            fieldname = fieldname.replace('/', '')
+            params[fieldname] = [float(ct[2]), float(ct[3])]
+
+        elif 'Regulator' in linestring:
+            fieldname = fieldname[:-7]
+            params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
+
+        elif 'Q-Factor' in linestring:
+            fieldname = fieldname.replace('-', '')
+            params[fieldname] = float(ct[2])
+
+        else:
+            fieldname = ct[0][2:-1]
+            fieldname = fieldname.replace(' ', '')
+            val = ct[2]
+            val = val.replace(',','')
+            try:
+                params[fieldname] = float(val)
+            except:
+                params[fieldname] = val.strip()
+
+        return params
+    
+    def read_header(self):
+        params = {}
+        with open(self.filename, "rt", encoding="utf8") as f:
+            # Read www.neaspec.com
+            line = f.readline()
+            count = 1
+            while f:
+                line = f.readline()
+                count = count + 1
+                if line[0] != '#':
+                    break
+                params = self.lineparser(line,params)
+            channels = line.split('\t')
+
+        return channels, params
+    
+    def read(self):
+        data = {}
+
+        channels, params = self.read_header()
+
+        count = len(list(params.keys()))+2
+
+        data = pd.read_csv(
+            self.filename,
+            sep="\t",
+            skiprows=count,
+            encoding="utf-8",
+            names=channels,
+        ).dropna(axis=1, how="all")
+
+        if self.output == "dict":
+            data = data.to_dict('list')
+            for key in list(data.keys()):
+                data[key] = np.asarray(data[key])
+
         return data, params

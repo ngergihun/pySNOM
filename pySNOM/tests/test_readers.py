@@ -51,5 +51,22 @@ class TestReaders(unittest.TestCase):
         np.testing.assert_almost_equal(params["Regulator"][0], 3.767854)
         np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
 
+    def test_general_reader_ifg(self):
+        f = 'datasets/testifg_singlepoint.txt'
+        file_reader = readers.NeaSpectrumGeneralReader(os.path.join(pySNOM.__path__[0], f))
+        data, params = file_reader.read()
+
+        np.testing.assert_almost_equal(data['O2A'][0], 9.580825)
+        np.testing.assert_almost_equal(params["Regulator"][0], 3.767854)
+        np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
+
+    def test_general_reader_spectrum(self):
+        f = 'datasets/testspectrum_singlepoint.txt'
+        file_reader = readers.NeaSpectrumGeneralReader(os.path.join(pySNOM.__path__[0], f))
+        data, params = file_reader.read()
+
+        np.testing.assert_almost_equal(data['O2A'][0], 0.1600194)
+        np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
+
 if __name__ == '__main__':
     unittest.main()

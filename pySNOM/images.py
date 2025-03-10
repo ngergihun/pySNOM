@@ -5,8 +5,7 @@ from enum import Enum
 from pySNOM.defaults import Defaults
 
 from skimage.transform import warp
-from skimage.registration import optical_flow_tvl1
-from skimage.registration import phase_cross_correlation
+from skimage.registration import optical_flow_tvl1, phase_cross_correlation
 from scipy.ndimage import fourier_shift
 
 MeasurementModes = Enum('MeasurementModes', ['None','AFM', 'PsHet', 'WLI', 'PTE', 'TappingAFMIR', 'ContactAFM'])
@@ -380,6 +379,7 @@ class CalculateXCorrDrift(Transformation):
         return shift
     
 class CorrectImageDrift(Transformation):
+    """ Rearranges image pixels to correct image shift calculated by cross-correlation"""
     def __init__(self, shift):
         self.shift = shift
 
@@ -387,3 +387,96 @@ class CorrectImageDrift(Transformation):
         offset_phase = fourier_shift(np.fft.fftn(image), self.shift)
         offset_phase = np.fft.ifftn(offset_phase)
         return offset_phase.real
+    
+class AlignImageStack(Transformation):
+    """ Calculates the drift between the given images and organize the comman areas into an aligned stack """
+    def __init__(self):
+        pass
+
+    def calculate(self, images):
+        shifts = []
+        crossrect = [0,0,np.shape(images[0])[0],np.shape(images[0])[1]]
+        if len(images) > 1:
+            xcorr = CalculateXCorrDrift(images[0])
+            for i in range(len(images)):
+                if i > 0:
+                    shifts.append(xcorr.transform(images[i]))
+                    crossrect = shifted_cross_section(rect1 = crossrect, rect2 = [-shifts[-1][0], shifts[-1][1], np.shape(images[i])[0], np.shape(images[i])[1]])
+            return shifts, crossrect
+        else:
+            return None
+
+    def transform(self, images, shifts, crossrect):
+        aligned_stack = []
+        for i in range(len(images)):
+            if i > 0:
+                shifter = CorrectImageDrift(shifts[i-1])
+                aligned_stack.append(shifter.transform(images[i]))
+                aligned_stack[i] = cut_image(aligned_stack[i], crossrect)
+            else:
+                aligned_stack.append(cut_image(images[i], crossrect))
+        return aligned_stack
+
+def dict_from_imagestack(X, channelname, wn = None):
+    """ Converts the image stack into a pySNOM spectra or interferograms compatible dictionary"""
+    final_dict = {}
+    params = {}
+
+    X = np.asarray(X)
+
+    params['PixelArea'] = [X.shape[1], X.shape[2], X.shape[0]]
+    params['Averaging'] = 1
+    params['Scan'] = 'Fourier Scan'
+
+    spectra = X.reshape((X.shape[0], X.shape[1]*X.shape[2]))
+    final_dict[channelname] = np.ravel(spectra,order='F')
+
+    y_loc = np.repeat(np.arange(X.shape[1]), X.shape[2])
+    x_loc = np.tile(np.arange(X.shape[2]), X.shape[1])
+    
+    final_dict["Row"] = np.repeat(y_loc,X.shape[0])
+    final_dict["Column"] = np.repeat(x_loc,X.shape[0])
+
+    if wn is not None:
+        final_dict["Wavenumber"] = np.tile(wn,X.shape[1]*X.shape[2])
+    else:
+        final_dict["Wavenumber"] = np.tile(np.arange(X.shape[0]),X.shape[1]*X.shape[2])
+
+    return final_dict, params
+
+def shifted_cross_section(rect1:list,rect2:list):
+    """ Calculates the cross-section of two rectangle shifted to each other"""
+    x1 = rect1[1]
+    x2 = rect2[1]
+    y1 = rect1[0]
+    y2 = rect2[0]
+    W1 = rect1[3]
+    W2 = rect2[3]
+    H1 = rect1[2]
+    H2 = rect2[2]
+
+    if y2 > y1:
+        Hn = H1 - (y2 - y1)
+        yn = y2
+    elif (y2 < y1) and (y1 + H1 > y2 + H2): # Negative shift and higher than H2
+        Hn = H2 + (y2 - y1)
+        yn = y1
+    else:
+        Hn = H1
+        yn = y1
+
+    if x2 > x1: # Positive shift
+        Wn = W1 - (x2 - x1)
+        xn = x2
+    elif (x2 < x1) and (x1 + W1 > x2 + W2): # Negative shift and higher than W2
+        Wn = W2 + (x2 - x1)
+        xn = x1
+    else:
+        Wn = W1
+        xn = x1
+
+    return int(yn), int(xn), int(Hn), int(Wn)
+
+def cut_image(image,rect):
+    """ Cuts the part of the image array defined by rectangle"""
+    return image[-(rect[2]):-(rect[0]+1),rect[1]:rect[1]+rect[3]]

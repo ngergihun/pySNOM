@@ -2,6 +2,8 @@ import gwyfile
 import gsffile
 import numpy as np
 import pandas as pd
+import os
+import re
 
 
 class Reader:
@@ -342,3 +344,34 @@ class NeaSpectrumGeneralReader(Reader):
                 data[key] = np.asarray(data[key])
 
         return data, params
+
+
+class ImageStackReader(Reader):
+    def __init__(self, folder=None):
+        super().__init__(folder)
+        self.folder = self.filename
+
+    def read(self, pattern):
+
+        imagestack = []
+        filepaths = get_filenames(self.folder,pattern)
+
+        for path in filepaths:
+            data_reader = GsfReader(path)
+            imagestack.append(data_reader.read().data)
+
+        return imagestack
+
+def get_filenames(folder, pattern):
+    """ Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename """
+
+    filepaths = []
+
+    for subfolder in os.listdir(folder):
+        if os.path.isdir(os.path.join(folder, subfolder)):
+            for name in os.listdir(os.path.join(folder,subfolder)):
+                if re.search(pattern,name):
+                    subpath = os.path.join(subfolder,name)
+                    filepaths.append(os.path.join(folder,subpath))
+
+    return filepaths

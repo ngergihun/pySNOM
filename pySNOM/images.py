@@ -417,6 +417,16 @@ class AlignImageStack(Transformation):
                 aligned_stack.append(cut_image(images[i], crossrect))
         return aligned_stack
 
+def create_nparray_stack(measlist):
+    """ Creates a numpy array stack from a list of measurements, organized as [ rows, columns, wavelengths ] (compatible with quasar io utils)"""
+
+    stack = np.zeros((np.shape(measlist[0])[0],np.shape(measlist[0])[1],len(measlist)))
+
+    for i, meas in enumerate(measlist):
+        stack[:,:,i] = meas
+
+    return stack
+
 def dict_from_imagestack(X, channelname, wn = None):
     """ Converts the image stack into a pySNOM spectra or interferograms compatible dictionary"""
     final_dict = {}

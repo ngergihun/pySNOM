@@ -6,15 +6,20 @@ from scipy.fft import fft, fftshift
 from scipy.interpolate import CubicSpline, interp1d
 from pySNOM.spectra import NeaSpectrum, SingleChannelSpectrum
 
-MeasurementModes = Enum('MeasurementModes', ['None','nanoFTIR'])
-DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
-ChannelTypes = Enum('ChannelTypes', ['None','Optical','Mechanical'])
-ScanTypes = Enum('ScanTypes',['Point','LineScan','HyperScan'])
+MeasurementModes = Enum("MeasurementModes", ["None", "nanoFTIR"])
+DataTypes = Enum("DataTypes", ["Amplitude", "Phase", "Topography"])
+ChannelTypes = Enum("ChannelTypes", ["None", "Optical", "Mechanical"])
+ScanTypes = Enum("ScanTypes", ["Point", "LineScan", "HyperScan"])
+
 
 # INTERFEROGRAMS ------------------------------------------------------------------------------------------------------------------
 class NeaInterferogram(NeaSpectrum):
-    def __init__(self, data, parameters, scantype="Point", filename=None, mode="nanoFTIR"):
-        super().__init__(data, parameters, scantype=scantype, filename=filename, mode=mode)
+    def __init__(
+        self, data, parameters, scantype="Point", filename=None, mode="nanoFTIR"
+    ):
+        super().__init__(
+            data, parameters, scantype=scantype, filename=filename, mode=mode
+        )
         self.data = data
 
     @property
@@ -27,15 +32,15 @@ class NeaInterferogram(NeaSpectrum):
         """Data setter to reshape properly"""
         self._data = Tools.reshape_ifg_data(value, self._parameters)
 
+
 # TRANSFORMATIONS ------------------------------------------------------------------------------------------------------------------
 class Transformation:
-
     def transform(self, data):
         raise NotImplementedError()
 
-class ProcessInterferogram(Transformation):
 
-    def __init__(self, apod = True, windowtype = "blackmanharris", nzeros = 4, wlpidx = None):
+class ProcessInterferogram(Transformation):
+    def __init__(self, apod=True, windowtype="blackmanharris", nzeros=4, wlpidx=None):
         self.apod = apod
         self.nzeros = nzeros
         self.wlpidx = wlpidx
@@ -47,75 +52,92 @@ class ProcessInterferogram(Transformation):
             self.wlpidx = np.argmax(np.abs(ifg))
         # Create apodization window
         if self.apod:
-            w = Tools.asymmetric_window(npoints = len(ifg), centerindex = self.wlpidx, windowtype = self.windowtype)
+            w = Tools.asymmetric_window(
+                npoints=len(ifg), centerindex=self.wlpidx, windowtype=self.windowtype
+            )
         else:
             w = np.ones(np.shape(ifg))
         ifg = ifg - np.mean(ifg)
         # Calculate FFT
-        complex_spectrum = fftshift(fft(ifg*w, self.nzeros*len(ifg)))
+        complex_spectrum = fftshift(fft(ifg * w, self.nzeros * len(ifg)))
         # Calculate frequency axis
-        stepsizes = np.mean(np.diff(maxis*1e6))
-        Fs = 1/np.mean(stepsizes)
-        faxis = (Fs/2)*np.linspace(-1,1,len(complex_spectrum))*10000/2
+        stepsizes = np.mean(np.diff(maxis * 1e6))
+        Fs = 1 / np.mean(stepsizes)
+        faxis = (Fs / 2) * np.linspace(-1, 1, len(complex_spectrum)) * 10000 / 2
 
-        return complex_spectrum[int(len(faxis)/2)-1:-1], faxis[int(len(faxis)/2)-1:-1]
+        return (
+            complex_spectrum[int(len(faxis) / 2) - 1 : -1],
+            faxis[int(len(faxis) / 2) - 1 : -1],
+        )
+
 
 class InterpolateInterferogram(Transformation):
-        """Reinterpolates the raw interferograms to a uniform grid."""
-        def __init__(self, method = "spline"):
-            self.method = method
+    """Reinterpolates the raw interferograms to a uniform grid."""
 
-        def transform(self, ifg, maxis):
-            # if np.iscomplex(ifg).any():
-            newifg = np.zeros(np.shape(ifg))*complex(1j)
-            # else:
-            # newifg = np.zeros(np.shape(ifg))
-            
-            newmaxis = np.zeros(np.shape(maxis))
+    def __init__(self, method="spline"):
+        self.method = method
 
-            match self.method:
-                case "spline":
-                    interp_object = CubicSpline
-                case "linear":
-                    interp_object = interp1d
+    def transform(self, ifg, maxis):
+        # if np.iscomplex(ifg).any():
+        newifg = np.zeros(np.shape(ifg)) * complex(1j)
+        # else:
+        # newifg = np.zeros(np.shape(ifg))
 
-            # in case of processing multiple interferograms in a 2d array we have to take the median
-            # sometimes the point locations has large jumps at the beginning (neaspec machine artifact)
-            startM = np.min(np.nanmedian(maxis,axis=0))
-            stopM = np.max(np.nanmedian(maxis,axis=0))
+        newmaxis = np.zeros(np.shape(maxis))
 
-            if ifg.ndim == 1:
-                newcoords = np.linspace(startM,stopM,num = len(maxis))
-                if np.iscomplex(ifg).any():
-                    interpR = interp_object(maxis,np.real(ifg))
-                    interpI = interp_object(maxis,np.imag(ifg))
+        match self.method:
+            case "spline":
+                interp_object = CubicSpline
+            case "linear":
+                interp_object = interp1d
+
+        # in case of processing multiple interferograms in a 2d array we have to take the median
+        # sometimes the point locations has large jumps at the beginning (neaspec machine artifact)
+        startM = np.min(np.nanmedian(maxis, axis=0))
+        stopM = np.max(np.nanmedian(maxis, axis=0))
+
+        if ifg.ndim == 1:
+            newcoords = np.linspace(startM, stopM, num=len(maxis))
+            if np.iscomplex(ifg).any():
+                interpR = interp_object(maxis, np.real(ifg))
+                interpI = interp_object(maxis, np.imag(ifg))
+                newifgR = interpR(newcoords)
+                newifgI = interpI(newcoords)
+                newifg = newifgR + newifgI * complex(1j)
+            else:
+                interpifg = interp_object(maxis, ifg)
+                newifg = interpifg(newcoords)
+            return newifg, newcoords
+        elif ifg.ndim == 2:
+            newcoords = np.linspace(startM, stopM, num=np.shape(maxis)[1])
+            for i in range(np.shape(ifg)[0]):
+                if np.iscomplex(ifg[i][:]).any():
+                    interpR = interp_object(maxis[i][:], np.real(ifg[i][:]))
+                    interpI = interp_object(maxis[i][:], np.imag(ifg[i][:]))
                     newifgR = interpR(newcoords)
                     newifgI = interpI(newcoords)
-                    newifg = newifgR + newifgI * complex(1j)
+                    newifg[i][:] = newifgR + newifgI * complex(1j)
+                    newmaxis[i][:] = newcoords
                 else:
-                    interpifg = interp_object(maxis,ifg)
-                    newifg = interpifg(newcoords)
-                return newifg, newcoords
-            elif ifg.ndim == 2:
-                newcoords = np.linspace(startM,stopM,num=np.shape(maxis)[1])
-                for i in range(np.shape(ifg)[0]):
-                    if np.iscomplex(ifg[i][:]).any():
-                        interpR = interp_object(maxis[i][:],np.real(ifg[i][:]))
-                        interpI = interp_object(maxis[i][:],np.imag(ifg[i][:]))
-                        newifgR = interpR(newcoords)
-                        newifgI = interpI(newcoords)
-                        newifg[i][:] = newifgR + newifgI * complex(1j)
-                        newmaxis[i][:] = newcoords
-                    else:
-                        interpifg = interp_object(maxis[i][:], ifg[i][:])
-                        newifg[i][:] = interpifg(newcoords)
-                        newmaxis[i][:] = newcoords
-                return newifg, newmaxis
-            else:
-                return ifg, maxis
+                    interpifg = interp_object(maxis[i][:], ifg[i][:])
+                    newifg[i][:] = interpifg(newcoords)
+                    newmaxis[i][:] = newcoords
+            return newifg, newmaxis
+        else:
+            return ifg, maxis
+
 
 class ProcessSingleChannel(Transformation):
-    def __init__(self, order, method = "complex", apod = True, windowtype = "blackmanharris", nzeros = 4, interpmethod = "spline", simpleoutput = False):
+    def __init__(
+        self,
+        order,
+        method="complex",
+        apod=True,
+        windowtype="blackmanharris",
+        nzeros=4,
+        interpmethod="spline",
+        simpleoutput=False,
+    ):
         self.order = order
         self.method = method
         self.windowtype = windowtype
@@ -124,47 +146,63 @@ class ProcessSingleChannel(Transformation):
         self.interpmethod = interpmethod
         self.simpleoutput = simpleoutput
 
-    def transform(self, neaifg):# Load amplitude and phase of the given channel
-            
+    def transform(self, neaifg):  # Load amplitude and phase of the given channel
         # Calculate the interferogram to process based on the given method
 
         channelA = f"O{self.order}A"
         channelP = f"O{self.order}P"
 
-        ifgA = np.reshape(neaifg.data[channelA],(neaifg.parameters['Averaging'],neaifg.parameters['PixelArea'][2]))
-        ifgP = np.reshape(neaifg.data[channelP],(neaifg.parameters['Averaging'],neaifg.parameters['PixelArea'][2]))
-        Maxis = np.reshape(neaifg.data["M"],(neaifg.parameters['Averaging'],neaifg.parameters['PixelArea'][2]))
+        ifgA = np.reshape(
+            neaifg.data[channelA],
+            (neaifg.parameters["Averaging"], neaifg.parameters["PixelArea"][2]),
+        )
+        ifgP = np.reshape(
+            neaifg.data[channelP],
+            (neaifg.parameters["Averaging"], neaifg.parameters["PixelArea"][2]),
+        )
+        Maxis = np.reshape(
+            neaifg.data["M"],
+            (neaifg.parameters["Averaging"], neaifg.parameters["PixelArea"][2]),
+        )
 
         match self.method:
             case "abs":
-                IFG = np.abs(ifgA*np.exp(ifgP*complex(1j)))
+                IFG = np.abs(ifgA * np.exp(ifgP * complex(1j)))
             case "real":
-                IFG = np.real(ifgA*np.exp(ifgP*complex(1j)))
+                IFG = np.real(ifgA * np.exp(ifgP * complex(1j)))
             case "imag":
-                IFG = np.imag(ifgA*np.exp(ifgP*complex(1j)))
+                IFG = np.imag(ifgA * np.exp(ifgP * complex(1j)))
             case "complex":
-                IFG = ifgA*np.exp(ifgP*complex(1j))
+                IFG = ifgA * np.exp(ifgP * complex(1j))
             case "simple":
                 IFG = ifgA
 
         #  Interpolate
-        IFG, Maxis = InterpolateInterferogram(method = self.interpmethod).transform(IFG, Maxis)
-        
+        IFG, Maxis = InterpolateInterferogram(method=self.interpmethod).transform(
+            IFG, Maxis
+        )
+
         # PROCESS IFGs
         # Check if it is multiple interferograms or just a single one
         if len(np.shape(IFG)) == 1:
-            complex_spectrum, f = ProcessInterferogram(apod = self.apod, windowtype = self.windowtype, nzeros = self.nzeros).transform(IFG,Maxis)
+            complex_spectrum, f = ProcessInterferogram(
+                apod=self.apod, windowtype=self.windowtype, nzeros=self.nzeros
+            ).transform(IFG, Maxis)
             amp = np.abs(complex_spectrum)
             phi = np.angle(complex_spectrum)
         else:
             # Allocate variables
-            spectraAll = complex(1j)*np.zeros((np.shape(IFG)[0],int(self.nzeros*np.shape(IFG)[1]/2)))
+            spectraAll = complex(1j) * np.zeros(
+                (np.shape(IFG)[0], int(self.nzeros * np.shape(IFG)[1] / 2))
+            )
             fAll = np.zeros(np.shape(spectraAll))
             # Go trough all
             for i in range(np.shape(IFG)[0]):
-                spectraAll[i,:], fAll[i,:] = ProcessInterferogram(apod = self.apod, windowtype = self.windowtype, nzeros = self.nzeros).transform(IFG[i,:], Maxis[i,:])
+                spectraAll[i, :], fAll[i, :] = ProcessInterferogram(
+                    apod=self.apod, windowtype=self.windowtype, nzeros=self.nzeros
+                ).transform(IFG[i, :], Maxis[i, :])
             # Average the complex spectra
-            complex_spectrum = np.mean(spectraAll, axis = 0)
+            complex_spectrum = np.mean(spectraAll, axis=0)
             # Extract amplitude and phase from the averaged complex spectrum
             amp = np.abs(complex_spectrum)
             phi = np.angle(complex_spectrum)
@@ -175,7 +213,11 @@ class ProcessSingleChannel(Transformation):
         else:
             spectrum_data = {}
             spectrum_parameters = copy.deepcopy(neaifg.parameters)
-            spectrum_parameters["ScanArea"] = [neaifg.parameters["ScanArea"][0],neaifg.parameters["ScanArea"][1],len(amp)]
+            spectrum_parameters["ScanArea"] = [
+                neaifg.parameters["ScanArea"][0],
+                neaifg.parameters["ScanArea"][1],
+                len(amp),
+            ]
             spectrum_data[channelA] = amp
             spectrum_data[channelP] = phi
             spectrum_data["Wavenumber"] = f
@@ -183,9 +225,17 @@ class ProcessSingleChannel(Transformation):
 
             return spectrum
 
-class ProcessMultiChannels(Transformation):
 
-    def __init__(self, method = "complex", apod = True, windowtype = "blackmanharris", nzeros = 4, interpmethod = "spline", simpleoutput = False):
+class ProcessMultiChannels(Transformation):
+    def __init__(
+        self,
+        method="complex",
+        apod=True,
+        windowtype="blackmanharris",
+        nzeros=4,
+        interpmethod="spline",
+        simpleoutput=False,
+    ):
         self.method = method
         self.apod = apod
         self.windowtype = windowtype
@@ -198,12 +248,19 @@ class ProcessMultiChannels(Transformation):
         spectrum_parameters = copy.deepcopy(neaifg.parameters)
 
         for order in range(6):
-
             channelA = f"O{order}A"
             channelP = f"O{order}P"
 
-            amp, phi, f = ProcessSingleChannel(order, method = self.method, apod = self.apod, windowtype = self.windowtype, nzeros = self.nzeros, interpmethod = self.interpmethod, simpleoutput=True).transform(neaifg)
-            
+            amp, phi, f = ProcessSingleChannel(
+                order,
+                method=self.method,
+                apod=self.apod,
+                windowtype=self.windowtype,
+                nzeros=self.nzeros,
+                interpmethod=self.interpmethod,
+                simpleoutput=True,
+            ).transform(neaifg)
+
             spectrum_data[channelA] = amp
             spectrum_data[channelP] = phi
             spectrum_data["Wavenumber"] = f
@@ -211,25 +268,49 @@ class ProcessMultiChannels(Transformation):
         if self.simpleoutput:
             spectrum_data
         else:
-            spectrum_parameters["ScanArea"] = [neaifg.parameters["ScanArea"][0],neaifg.parameters["ScanArea"][1],len(amp)]
+            spectrum_parameters["ScanArea"] = [
+                neaifg.parameters["ScanArea"][0],
+                neaifg.parameters["ScanArea"][1],
+                len(amp),
+            ]
             spectrum = NeaSpectrum(spectrum_data, spectrum_parameters)
             return spectrum
 
-class ProcessAllPoints(Transformation):
 
-    def __init__(self, method = "complex", apod = True, windowtype = "blackmanharris", nzeros = 4, interpmethod = "spline"):
+class ProcessAllPoints(Transformation):
+    def __init__(
+        self,
+        method="complex",
+        apod=True,
+        windowtype="blackmanharris",
+        nzeros=4,
+        interpmethod="spline",
+    ):
         self.method = method
         self.apod = apod
         self.windowtype = windowtype
         self.nzeros = nzeros
         self.interpmethod = interpmethod
-        
-    def transform(self,neaifg):
-        if neaifg.parameters['PixelArea'][0] == 1 and neaifg.parameters['PixelArea'][1] == 1:
-            spectra = ProcessMultiChannels(method = self.method, windowtype = self.windowtype, nzeros = self.nzeros, 
-                                           apod = self.apod, interpmethod = self.interpmethod, simpleoutput = False).transform(neaifg)
+
+    def transform(self, neaifg):
+        if (
+            neaifg.parameters["PixelArea"][0] == 1
+            and neaifg.parameters["PixelArea"][1] == 1
+        ):
+            spectra = ProcessMultiChannels(
+                method=self.method,
+                windowtype=self.windowtype,
+                nzeros=self.nzeros,
+                apod=self.apod,
+                interpmethod=self.interpmethod,
+                simpleoutput=False,
+            ).transform(neaifg)
         else:
-            pixel_area = [neaifg.parameters["PixelArea"][0],neaifg.parameters["PixelArea"][1],int(self.nzeros*neaifg.parameters['PixelArea'][2]/2)]
+            pixel_area = [
+                neaifg.parameters["PixelArea"][0],
+                neaifg.parameters["PixelArea"][1],
+                int(self.nzeros * neaifg.parameters["PixelArea"][2] / 2),
+            ]
 
             ampFullData = np.zeros((pixel_area[0], pixel_area[1], pixel_area[2]))
             phiFullData = np.zeros(np.shape(ampFullData))
@@ -237,76 +318,103 @@ class ProcessAllPoints(Transformation):
 
             pointifg_data = dict()
             pointifg_params = dict()
-            pointifg_params["PixelArea"] = [1,1,neaifg.parameters["PixelArea"][2]]
+            pointifg_params["PixelArea"] = [1, 1, neaifg.parameters["PixelArea"][2]]
 
-            spectra = NeaSpectrum({},{}, scantype=neaifg.scantype)
-            
+            spectra = NeaSpectrum({}, {}, scantype=neaifg.scantype)
+
             for order in range(6):
                 channelA = f"O{order}A"
                 channelP = f"O{order}P"
                 for i in range(pixel_area[0]):
                     for k in range(pixel_area[1]):
-                            pointifg_data[channelA] = neaifg.data[channelA][i,k,:]
-                            pointifg_data[channelP] = neaifg.data[channelP][i,k,:]
-                            pointifg_data["M"] = neaifg.data["M"][i,k,:]
+                        pointifg_data[channelA] = neaifg.data[channelA][i, k, :]
+                        pointifg_data[channelP] = neaifg.data[channelP][i, k, :]
+                        pointifg_data["M"] = neaifg.data["M"][i, k, :]
 
-                            ampFullData[i,k,:], phiFullData[i,k,:], fFullData[i,k,:] = ProcessSingleChannel(order, method = self.method, apod = self.apod, 
-                                                                                                            windowtype = self.windowtype, nzeros = self.nzeros, 
-                                                                                                            interpmethod = self.interpmethod, simpleoutput=True).transform(neaifg)                    
-                
+                        (
+                            ampFullData[i, k, :],
+                            phiFullData[i, k, :],
+                            fFullData[i, k, :],
+                        ) = ProcessSingleChannel(
+                            order,
+                            method=self.method,
+                            apod=self.apod,
+                            windowtype=self.windowtype,
+                            nzeros=self.nzeros,
+                            interpmethod=self.interpmethod,
+                            simpleoutput=True,
+                        ).transform(
+                            neaifg
+                        )
+
                 spectra.data[channelA] = ampFullData
                 spectra.data[channelP] = phiFullData
                 spectra.data["Wavenumber"] = fFullData
-            
+
             spectra._parameters["PixelArea"] = pixel_area
 
         return spectra
+
 
 # TOOLS ------------------------------------------------------------------------------------------------------------------
 class Tools:
     def __init__(self):
         pass
-    
+
+    @staticmethod
     def reshape_ifg_data(data, params):
-        if params['PixelArea'][1] != 1 and params['PixelArea'][0] != 1:
+        if params["PixelArea"][1] != 1 and params["PixelArea"][0] != 1:
             for channel in list(data.keys()):
-                data[channel] = np.reshape(data[channel], (int(params['PixelArea'][0]), int(params['PixelArea'][1]), int(params['PixelArea'][2]*params['Averaging'])))
+                data[channel] = np.reshape(
+                    data[channel],
+                    (
+                        int(params["PixelArea"][0]),
+                        int(params["PixelArea"][1]),
+                        int(params["PixelArea"][2] * params["Averaging"]),
+                    ),
+                )
             return data
         else:
             return data
 
+    @staticmethod
     def reshape_linescan_interferogram(data, parameters):
-        return np.reshape(np.ravel(data),(parameters["PixelArea"][0],parameters["PixelArea"][2]))
-    
+        return np.reshape(
+            np.ravel(data), (parameters["PixelArea"][0], parameters["PixelArea"][2])
+        )
+
+    @staticmethod
     def asymmetric_window(npoints, centerindex=None, windowtype="blackmanharris"):
-        
         if centerindex is None:
-            centerindex = int(len(windowPart2)/2)
+            centerindex = int(len(windowPart2) / 2)
 
         # Calculate the length of the two sides
-        length1 = (centerindex)*2
-        length2 = (npoints-centerindex)*2
+        length1 = (centerindex) * 2
+        length2 = (npoints - centerindex) * 2
 
         # Generate the two parts of the window
 
-        windowfunc = getattr(signal.windows,windowtype)
+        windowfunc = getattr(signal.windows, windowtype)
         windowPart1 = windowfunc(length1)
         windowPart2 = windowfunc(length2)
 
         # Construct the asymetric window from the two sides
-        asymWindow1 = windowPart1[0:int(len(windowPart1)/2)]
+        asymWindow1 = windowPart1[0 : int(len(windowPart1) / 2)]
         if npoints % 2 == 0:
-            asymWindow2 = windowPart2[int(len(windowPart2)/2):int(len(windowPart2))]
+            asymWindow2 = windowPart2[int(len(windowPart2) / 2) : int(len(windowPart2))]
         else:
-            asymWindow2 = windowPart2[int(len(windowPart2)/2+1):int(len(windowPart2))]
+            asymWindow2 = windowPart2[
+                int(len(windowPart2) / 2 + 1) : int(len(windowPart2))
+            ]
 
         return np.concatenate((asymWindow1, asymWindow2))
-    
+
+    @staticmethod
     def analyse_steps(maxis):
-        stepsize = np.zeros((np.shape(maxis)[0],1))
-        stepspread = np.zeros((np.shape(maxis)[0],1))
+        stepsize = np.zeros((np.shape(maxis)[0], 1))
+        stepspread = np.zeros((np.shape(maxis)[0], 1))
         for i in range(np.shape(maxis)[0]):
-            stepsize[i] = np.mean(np.diff(maxis[i,:]))
-            stepspread[i] = np.std(np.diff(maxis[i,:]))
+            stepsize[i] = np.mean(np.diff(maxis[i, :]))
+            stepspread[i] = np.std(np.diff(maxis[i, :]))
 
         return stepsize, stepspread

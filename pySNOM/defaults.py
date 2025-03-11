@@ -1,8 +1,9 @@
-""" This file contains a dictionary of definitions to create connection 
+""" This file contains a dictionary of definitions to create connection
 between the manufacturer nomeclature and the naming used in the package """
 
+
 class Defaults:
-# Neaspec names are taken from the Scan field of the info txt file
+    # Neaspec names are taken from the Scan field of the info txt file
     def __init__(self) -> None:
         self.image_mode_defs = {
             "AFM": "AFM",
@@ -17,5 +18,6 @@ class Defaults:
             "Fourier Scan": "nanoFTIR",
             "Pointspectroscopy PTE+": "PTE",
         }
+
 
 defaults = Defaults()

@@ -1,32 +1,39 @@
 import numpy as np
 import copy
+import re
 from enum import Enum
 from pySNOM.defaults import Defaults
-from gwyfile.objects import GwyDataField
 
-MeasurementModes = Enum('MeasurementModes', ['None','AFM', 'PsHet', 'WLI', 'PTE', 'TappingAFMIR', 'ContactAFM'])
-DataTypes = Enum('DataTypes', ['Amplitude', 'Phase', 'Topography'])
-ChannelTypes = Enum('ChannelTypes', ['None','Optical','Mechanical'])
+MeasurementModes = Enum(
+    "MeasurementModes",
+    ["None", "AFM", "PsHet", "WLI", "PTE", "TappingAFMIR", "ContactAFM"],
+)
+DataTypes = Enum("DataTypes", ["Amplitude", "Phase", "Topography"])
+ChannelTypes = Enum("ChannelTypes", ["None", "Optical", "Mechanical"])
+
 
 # Full measurement data containing all the measurement channels
 class Measurement:
     def __init__(self, data, filename=None, info=None, mode="None"):
-        self.filename = filename # Full path with name
-        self.mode = mode # Measurement mode (PTE, PSHet, AFM, NanoFTIR) - Enum MeasurementModes
-        self._data = data # All channels - Dictionary
+        self.filename = filename
+        self.mode = (
+            mode
+        )
+        self._data = data
         self.info = info
 
     @property
     def mode(self):
         """Property - measurement mode (Enum)"""
         return self._mode
+
     @mode.setter
     def mode(self, value: str):
         try:
             self._mode = MeasurementModes[value]
         except ValueError:
             self._mode = MeasurementModes["AFM"]
-            raise ValueError(value + 'is not a measurement mode!')
+            raise ValueError(value + "is not a measurement mode!")
 
     @property
     def data(self):
@@ -37,7 +44,7 @@ class Measurement:
     def info(self):
         """Property - info (dictionary)"""
         return self._info
-    
+
     @info.setter
     def info(self, info):
         self._info = info
@@ -54,20 +61,35 @@ class Measurement:
     def image_from_channel(self, channelname: str):
         """Returns a single Image object with the requred channeldata"""
         channeldata = self.extract_channel(channelname)
-        singleimage = GwyImage(channeldata, filename = self.filename, mode = self.mode, channel = channelname, info = self.info)
+        singleimage = GwyImage(
+            channeldata,
+            filename=self.filename,
+            mode=self.mode,
+            channel=channelname,
+            info=self.info,
+        )
 
         return singleimage
 
 
 # Single image from a single data channel
 class Image(Measurement):
-    def __init__(self, data, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography'], info=None):
+    def __init__(
+        self,
+        data,
+        filename=None,
+        mode="AFM",
+        channelname="Z raw",
+        order=0,
+        datatype=DataTypes["Topography"],
+        info=None,
+    ):
         super().__init__(data, filename, info=info, mode=mode)
         # Describing channel and datatype
-        self.channel = channelname # Full channel name
-        self.order = int(order)   # Order, nth
-        self.datatype = datatype # Amplitude, Phase, Topography - Enum DataTypes
-        
+        self.channel = channelname  # Full channel name
+        self.order = int(order)  # Order, nth
+        self.datatype = datatype  # Amplitude, Phase, Topography - Enum DataTypes
+
         self.data = data
         self.xoff = 0
         self.yoff = 0
@@ -79,7 +101,7 @@ class Image(Measurement):
         """Property - data (numpy array)"""
         # Set the data
         return self._data
-    
+
     @data.setter
     def data(self, new_data):
         """Setter for data (optional if you want data to be modifiable later)"""
@@ -90,17 +112,34 @@ class Image(Measurement):
     def channel(self):
         """Property - channel (string)"""
         return self._channel
-    
-    @channel.setter
-    def channel(self,value):
 
+    @channel.setter
+    def channel(self, value):
         self._channel = value
         self.channeltype, self.order, self.datatype = type_from_channelname(value)
 
+
 class GwyImage(Image):
-    def __init__(self, data, filename=None, mode="AFM", channelname='Z raw', order=0, datatype=DataTypes['Topography'], info=None):
-        super().__init__(data, filename=filename, mode=mode, channelname=channelname, order=order, datatype=datatype, info=info)
-    
+    def __init__(
+        self,
+        data,
+        filename=None,
+        mode="AFM",
+        channelname="Z raw",
+        order=0,
+        datatype=DataTypes["Topography"],
+        info=None,
+    ):
+        super().__init__(
+            data,
+            filename=filename,
+            mode=mode,
+            channelname=channelname,
+            order=order,
+            datatype=datatype,
+            info=info,
+        )
+
         self.data = data
         self.xoff = data.xoff
         self.yoff = data.yoff
@@ -112,54 +151,61 @@ class GwyImage(Image):
         """Property - data (numpy array)"""
         # Set the data
         return self._data
-    
+
     @data.setter
-    def data(self,value):
+    def data(self, value):
         self._data = value.data
         self.xres, self.yres = np.shape(self._data)
         if self._data is None:
-            raise ValueError("The provided data object does not contain 'data' attribute")
+            raise ValueError(
+                "The provided data object does not contain 'data' attribute"
+            )
+
 
 def type_from_channelname(channelname):
-    if channelname[0] == 'O':
+    channel_strings = ["M(.?)A", "M(.?)P", "O(.?)A", "O(.?)P", "Z C", "Z raw"]
+    for pattern in channel_strings:
+        if re.search(pattern, channelname) is not None:
+            channel_name = re.search(pattern, channelname)[0]
+
+    if channel_name[0] == "O":
         channeltype = ChannelTypes["Optical"]
-    elif 'M' in channelname:
+    elif "M" in channel_name:
         channeltype = ChannelTypes["Mechanical"]
     else:
         channeltype = ChannelTypes["None"]
 
-    if 'Z' in channelname:
+    if "Z" in channel_name:
         order = 0
     else:
-        order = int(channelname[1])
-    
-    if channelname[2] == 'A':
+        order = int(channel_name[1])
+
+    if channel_name[2] == "A":
         datatype = DataTypes["Amplitude"]
-    elif 'Z' in channelname:
+    elif "Z" in channel_name:
         datatype = DataTypes["Topography"]
     else:
         datatype = DataTypes["Phase"]
 
     return channeltype, order, datatype
 
-class Transformation:
 
+class Transformation:
     def transform(self, data):
         raise NotImplementedError()
 
 
 class LineLevel(Transformation):
-
-    def __init__(self, method='median', datatype=DataTypes.Phase):
+    def __init__(self, method="median", datatype=DataTypes.Phase):
         self.method = method
         self.datatype = datatype
 
     def transform(self, data):
-        if self.method == 'median':
+        if self.method == "median":
             norm = np.nanmedian(data, axis=1, keepdims=True)
-        elif self.method == 'mean':
+        elif self.method == "mean":
             norm = np.nanmean(data, axis=1, keepdims=True)
-        elif self.method == 'difference':
+        elif self.method == "difference":
             if self.datatype == DataTypes.Amplitude:
                 norm = np.nanmedian(data[1:] / data[:-1], axis=1, keepdims=True)
             else:
@@ -176,62 +222,70 @@ class LineLevel(Transformation):
         else:
             return data - norm
 
-class RotatePhase(Transformation):
 
+class RotatePhase(Transformation):
     def __init__(self, degree=0.0):
         self.degree = degree
 
     def transform(self, data):
         # Construct complex dataset
-        complexdata = np.exp(data*complex(1j))
+        complexdata = np.exp(data * complex(1j))
         # Rotate and extract phase
-        return np.angle(complexdata*np.exp(np.deg2rad(self.degree)*complex(1j)))
+        return np.angle(complexdata * np.exp(np.deg2rad(self.degree) * complex(1j)))
+
 
 class SelfReference(Transformation):
-
     def __init__(self, referencedata=1, datatype=DataTypes.Phase):
         self.datatype = datatype
         self.referencedata = referencedata
+
     def transform(self, data):
         if self.datatype == DataTypes.Amplitude:
             return data / self.referencedata
         elif self.datatype == DataTypes.Phase:
             return data - self.referencedata
         else:
-            raise RuntimeError("Self-referencing makes only sense for amplitude or phase data")
+            raise RuntimeError(
+                "Self-referencing makes only sense for amplitude or phase data"
+            )
+
 
 class SimpleNormalize(Transformation):
-
-    def __init__(self, method='median', value=1.0, datatype=DataTypes.Phase):
+    def __init__(self, method="median", value=1.0, datatype=DataTypes.Phase):
         self.method = method
         self.value = value
         self.datatype = datatype
 
     def transform(self, data):
         match self.method:
-            case 'median':
+            case "median":
                 if self.datatype == DataTypes.Amplitude:
                     return data / np.nanmedian(data)
                 else:
                     return data - np.nanmedian(data)
-            case 'mean':
+            case "mean":
                 if self.datatype == DataTypes.Amplitude:
                     return data / np.nanmean(data)
                 else:
                     return data - np.nanmean(data)
-            case 'manual':
+            case "manual":
                 if self.datatype == DataTypes.Amplitude:
                     return data / self.value
                 else:
                     return data - self.value
-                
-class BackgroundPolyFit(Transformation):
+            case "min":
+                if self.datatype == DataTypes.Amplitude:
+                    return data / np.nanmin(data)
+                else:
+                    return data - np.nanmin(data)
 
+
+class BackgroundPolyFit(Transformation):
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
         self.datatype = datatype
-        
+
     def transform(self, data):
         Z = copy.deepcopy(data)
         x = list(range(0, Z.shape[1]))
@@ -247,9 +301,9 @@ class BackgroundPolyFit(Transformation):
         def get_basis(x, y, max_order_x=1, max_order_y=1):
             """Return the fit basis polynomials: 1, x, x^2, ..., xy, x^2y, ... etc."""
             basis = []
-            for i in range(max_order_y+1):
+            for i in range(max_order_y + 1):
                 # for j in range(max_order_x - i +1):
-                for j in range(max_order_x+1):
+                for j in range(max_order_x + 1):
                     basis.append(x**j * y**i)
             return basis
 
@@ -258,12 +312,18 @@ class BackgroundPolyFit(Transformation):
             A = np.vstack(basis).T
             c, r, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
-            background = np.sum(c[:, None, None] * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(len(basis), *X.shape),axis=0)
+            background = np.sum(
+                c[:, None, None]
+                * np.array(get_basis(X, Y, self.xorder, self.yorder)).reshape(
+                    len(basis), *X.shape
+                ),
+                axis=0,
+            )
         except ValueError:
-                background = np.ones(np.shape(data))
-                print("X and Y order must be integer!")
+            background = np.ones(np.shape(data))
+            print("X and Y order must be integer!")
 
         if self.datatype == DataTypes["Amplitude"]:
             return Z / background, background
         else:
-            return Z-background, background
+            return Z - background, background

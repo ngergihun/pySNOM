@@ -311,6 +311,9 @@ class NeaSpectrumGeneralReader(Reader):
                     break
                 params = self.lineparser(line, params)
             channels = line.split("\t")
+            channels = [
+                channel.strip() for channel in channels
+            ]
 
         return channels, params
 

@@ -172,22 +172,22 @@ class TestSimpleNormalize(unittest.TestCase):
         out = l.transform(d,mask=mask)
         np.testing.assert_almost_equal(out, [-1.0,0.0,1.0])
 
-        
-class TestAlignImageStack(unittest.TestCase):
 
+class TestAlignImageStack(unittest.TestCase):
     def test_stackalignment(self):
-        image1 = np.zeros((50,100))
-        image2 = np.zeros((50,100))
-        image1[10:40,10:40] = 1
-        image2[20:50,20:50] = 1
+        image1 = np.zeros((50, 100))
+        image2 = np.zeros((50, 100))
+        image1[10:40, 10:40] = 1
+        image2[20:50, 20:50] = 1
 
         aligner = AlignImageStack()
         shifts, crossrect = aligner.calculate([image1, image2])
-        np.testing.assert_equal(shifts, [np.asarray([-10., -10.])])
+        np.testing.assert_equal(shifts, [np.asarray([-10.0, -10.0])])
         np.testing.assert_equal(crossrect, [10, 0, 40, 90])
 
-        out = aligner.transform([image1, image2],shifts,crossrect)
-        np.testing.assert_equal(np.shape(out), (2,29,90))
+        out = aligner.transform([image1, image2], shifts, crossrect)
+        np.testing.assert_equal(np.shape(out), (2, 29, 90))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

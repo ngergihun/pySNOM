@@ -315,7 +315,7 @@ class NeaSpectrumGeneralReader(Reader):
                 if line[0] == "#":
                     params = self.lineparser(line, params)
             channels = line.split("\t")
-            channels = [channel.strip() for channel in channels[:-1]]
+            channels = [channel.strip() for channel in channels]
 
         return channels, params
 
@@ -348,16 +348,16 @@ class NeaSpectrumGeneralReader(Reader):
 
 
 class ImageStackReader(Reader):
-    ''' Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string int the filename '''
+    """Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string int the filename"""
+
     def __init__(self, folder=None):
         super().__init__(folder)
         self.folder = self.filename
 
     def read(self, pattern):
-
         imagestack = []
         wns = []
-        filepaths = get_filenames(self.folder,pattern)
+        filepaths = get_filenames(self.folder, pattern)
 
         for i, path in enumerate(filepaths):
             data_reader = GsfReader(path)
@@ -368,9 +368,9 @@ class ImageStackReader(Reader):
                 inforeader = NeaInfoReader(txtpath)
                 infodict = inforeader.read()
 
-                wn = infodict['TargetWavelength']
+                wn = infodict["TargetWavelength"]
                 if wn < 50.0:
-                    wn = 10000/wn
+                    wn = 10000 / wn
                 wns.append(wn)
             except:
                 wns.append(i)
@@ -381,25 +381,27 @@ class ImageStackReader(Reader):
 
         return imagestack, wns
 
+
 def get_filenames(folder, pattern):
-    """ Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename """
+    """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""
 
     filepaths = []
 
     for subfolder in os.listdir(folder):
         if os.path.isdir(os.path.join(folder, subfolder)):
-            for name in os.listdir(os.path.join(folder,subfolder)):
-                if re.search(pattern,name):
-                    subpath = os.path.join(subfolder,name)
-                    filepaths.append(os.path.join(folder,subpath))
+            for name in os.listdir(os.path.join(folder, subfolder)):
+                if re.search(pattern, name):
+                    subpath = os.path.join(subfolder, name)
+                    filepaths.append(os.path.join(folder, subpath))
 
     return filepaths
 
+
 def recreate_infofile_name_from_path(filepath):
-    ''' Recreates the name of the info file from the path of the data file '''
+    """Recreates the name of the info file from the path of the data file"""
 
     pathparts = list(pathlib.PurePath(filepath).parts)
     newparts = pathparts[:-1]
-    newparts.append(pathparts[-2] + '.txt')
+    newparts.append(pathparts[-2] + ".txt")
 
     return str(pathlib.PurePath(*newparts))

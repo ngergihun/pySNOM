@@ -347,6 +347,7 @@ class NeaSpectrumGeneralReader(Reader):
 
 
 class ImageStackReader(Reader):
+    ''' Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string int the filename '''
     def __init__(self, folder=None):
         super().__init__(folder)
         self.folder = self.filename

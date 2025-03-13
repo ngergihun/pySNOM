@@ -417,6 +417,15 @@ class AlignImageStack(Transformation):
                 aligned_stack.append(cut_image(images[i], crossrect))
         return aligned_stack
 
+def sort_image_stack(images,wns):
+    ''' Sort the image stack based on the wavenumber list'''
+
+    idxs = np.argsort(np.asarray(wns))
+    images = [images[i] for i in idxs]
+    wns = [wns[i] for i in idxs]
+
+    return images, wns
+
 def create_nparray_stack(measlist):
     """ Creates a numpy array stack from a list of measurements, organized as [ rows, columns, wavelengths ] (compatible with quasar io utils)"""
 

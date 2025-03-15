@@ -221,3 +221,54 @@ def recreate_infofile_name_from_path(filepath):
     newparts.append(pathparts[-2] + ".txt")
 
     return str(pathlib.PurePath(*newparts))
+
+
+class NeaFileLegacyReader(Reader):
+    """ Reader for .nea files from older neasnom microscopes"""
+
+    def __init__(self, fullfilepath=None):
+            super().__init__(fullfilepath)
+
+    def read(self):
+
+        data = {}
+
+        with open(self.filename, "rt", encoding="utf8") as f:
+            h = next(f) # header
+            h = h.strip()
+            h = h.split("\t")
+
+            l = next(f)
+            l = l.strip()
+            l = l.split("\t")
+
+            f.seek(0)
+            next(f)
+            datacols = np.arange(len(h), len(l))
+            C_data = np.loadtxt(f, dtype="float", usecols=datacols)
+
+            f.seek(0)
+            next(f)
+
+            metacols = np.arange(0, 4)
+            meta = np.loadtxt(f,
+                                dtype={'names': tuple(h),
+                                        'formats': (int, int, int, "S10")},
+                                usecols=metacols)
+            if "Run" in h:
+                runs = np.unique(meta["Run"])
+            else:
+                runs = [1]
+
+            indexes = np.unique(meta["Channel"], return_index=True)[1]
+            channels = [meta["Channel"][index] for index in sorted(indexes)]
+            channels = [channel.decode('utf-8') for channel in channels]
+
+            for name in h:
+                if name != "Channel":
+                    data[name] = np.array(meta[name])
+
+            for i in range(len(channels)):
+                data[channels[i]] = np.ravel(C_data[i*len(runs):(i+1)*len(runs), :])
+
+        return data

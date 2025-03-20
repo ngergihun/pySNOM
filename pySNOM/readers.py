@@ -307,12 +307,10 @@ class NeaSpectrumGeneralReader(Reader):
             while f:
                 line = f.readline()
                 count = count + 1
-                # print(repr(line[0]),count)
                 if line[0] not in ("#",'\n'):
                     break
                 if line[0] == "#":
                     params = self.lineparser(line, params)
-                # params = self.lineparser(line, params)
             channels = line.split("\t")
             channels = [
                 channel.strip() for channel in channels[:-1]

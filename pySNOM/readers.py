@@ -255,7 +255,6 @@ class NeaSpectrumGeneralReader(Reader):
         self.output = output
 
     def lineparser(self, linestring, params: dict):
-        print(linestring)
         ct = linestring.split("\t")
         fieldname = ct[0][2:-1]
         fieldname = fieldname.replace(" ", "")
@@ -307,8 +306,8 @@ class NeaSpectrumGeneralReader(Reader):
             count = 1
             while f:
                 line = f.readline()
-                # print(repr(line[0]))
                 count = count + 1
+                # print(repr(line[0]),count)
                 if line[0] not in ("#",'\n'):
                     break
                 if line[0] == "#":
@@ -316,7 +315,7 @@ class NeaSpectrumGeneralReader(Reader):
                 # params = self.lineparser(line, params)
             channels = line.split("\t")
             channels = [
-                channel.strip() for channel in channels
+                channel.strip() for channel in channels[:-1]
             ]
 
         return channels, params
@@ -325,9 +324,9 @@ class NeaSpectrumGeneralReader(Reader):
         data = {}
 
         channels, params = self.read_header()
+        channels.append("")
 
         count = len(list(params.keys())) + 2
-        print(count)
 
         data = pd.read_csv(
             self.filename,
@@ -335,11 +334,13 @@ class NeaSpectrumGeneralReader(Reader):
             skiprows=count,
             encoding="utf-8",
             names=channels,
+            lineterminator="\n",
         ).dropna(axis=1, how="all")
 
         if self.output == "dict":
             data = data.to_dict("list")
-            for key in list(data.keys()):
+            allkeys = list(data.keys())
+            for key in allkeys:
                 data[key] = np.asarray(data[key])
 
         return data, params

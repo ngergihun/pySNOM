@@ -335,10 +335,12 @@ class NeaSpectrumGeneralReader(Reader):
             lineterminator="\n",
         ).dropna(axis=1, how="all")
 
+        cols_to_keep = [c for c in data.columns if c != '']
+        data = data[cols_to_keep]
+
         if self.output == "dict":
             data = data.to_dict("list")
-            allkeys = list(data.keys())
-            for key in allkeys:
+            for key in list(data.keys()):
                 data[key] = np.asarray(data[key])
 
         return data, params

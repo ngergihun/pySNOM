@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pathlib
 
+
 class Reader:
     def __init__(self, fullfilepath=None):
         self.filename = fullfilepath
@@ -311,9 +312,7 @@ class NeaSpectrumGeneralReader(Reader):
                     break
                 params = self.lineparser(line, params)
             channels = line.split("\t")
-            channels = [
-                channel.strip() for channel in channels
-            ]
+            channels = [channel.strip() for channel in channels]
 
         return channels, params
 
@@ -339,18 +338,18 @@ class NeaSpectrumGeneralReader(Reader):
 
         return data, params
 
+
 class NeaFileLegacyReader(Reader):
-    """ Reader for .nea files from older neasnom microscopes"""
+    """Reader for .nea files from older neasnom microscopes"""
 
     def __init__(self, fullfilepath=None):
-            super().__init__(fullfilepath)
+        super().__init__(fullfilepath)
 
     def read(self):
-
         data = {}
 
-        with open(self.filename, "rt", encoding="utf8") as f:
-            h = next(f) # header
+        with open(self.filename, encoding="utf8") as f:
+            h = next(f)  # header
             h = h.strip()
             h = h.split("\t")
 
@@ -367,10 +366,11 @@ class NeaFileLegacyReader(Reader):
             next(f)
 
             metacols = np.arange(0, 4)
-            meta = np.loadtxt(f,
-                                dtype={'names': tuple(h),
-                                        'formats': (int, int, int, "S10")},
-                                usecols=metacols)
+            meta = np.loadtxt(
+                f,
+                dtype={"names": tuple(h), "formats": (int, int, int, "S10")},
+                usecols=metacols,
+            )
             if "Run" in h:
                 runs = np.unique(meta["Run"])
             else:
@@ -378,13 +378,15 @@ class NeaFileLegacyReader(Reader):
 
             indexes = np.unique(meta["Channel"], return_index=True)[1]
             channels = [meta["Channel"][index] for index in sorted(indexes)]
-            channels = [channel.decode('utf-8') for channel in channels]
+            channels = [channel.decode("utf-8") for channel in channels]
 
             for name in h:
                 if name != "Channel":
                     data[name] = np.array(meta[name])
 
             for i in range(len(channels)):
-                data[channels[i]] = np.ravel(C_data[i*len(runs):(i+1)*len(runs), :])
+                data[channels[i]] = np.ravel(
+                    C_data[i * len(runs) : (i + 1) * len(runs), :]
+                )
 
         return data

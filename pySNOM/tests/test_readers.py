@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 import pySNOM
-from pySNOM import readers, Image
+from pySNOM import readers
 
 
 class TestReaders(unittest.TestCase):

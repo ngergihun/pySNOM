@@ -347,6 +347,7 @@ class NeaFileLegacyReader(Reader):
 
     def read(self):
         data = {}
+        params = {}
 
         with open(self.filename, encoding="utf8") as f:
             h = next(f)  # header
@@ -389,4 +390,7 @@ class NeaFileLegacyReader(Reader):
                     C_data[i * len(runs) : (i + 1) * len(runs), :]
                 )
 
-        return data
+            params["PixelArea"] = [int(data["Row"].max() + 1), int(data["Column"].max() + 1), np.shape(C_data)[1]]
+            params["Scan"] = "Fourier Scan"
+
+        return data, params

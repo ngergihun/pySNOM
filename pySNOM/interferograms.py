@@ -33,14 +33,20 @@ class NeaInterferogram(NeaSpectrum):
         """Data setter to reshape properly"""
         self._data = Tools.reshape_ifg_data(value, self._parameters)
 
-    def add_channel(self,values,channelname):
+    def add_channel(self, values, channelname):
         """Adds a new channel to data dictionary"""
         if channelname not in list(self._data.keys()):
-            self._data[channelname] = np.reshape(values,(int(self.parameters["PixelArea"][0]),
-                                                        int(self.parameters["PixelArea"][1]),
-                                                        int(self.parameters["PixelArea"][2] * self.parameters["Averaging"])))
+            self._data[channelname] = np.reshape(
+                values,
+                (
+                    int(self.parameters["PixelArea"][0]),
+                    int(self.parameters["PixelArea"][1]),
+                    int(self.parameters["PixelArea"][2] * self.parameters["Averaging"]),
+                ),
+            )
         else:
             raise ValueError
+
 
 # TRANSFORMATIONS ------------------------------------------------------------------------------------------------------------------
 class Transformation:
@@ -333,16 +339,24 @@ class ProcessAllPoints(Transformation):
             spectra = NeaSpectrum({}, {}, scantype=neaifg.scantype)
 
             allchannels = list(neaifg.data.keys())
-            optical_channels = [name for name in allchannels if re.match('O(.?)A', name) or re.match('O(.?)P', name)]
-            orders = [int(n) for c in optical_channels for n in re.findall(r'\d',c)]
+            optical_channels = [
+                name
+                for name in allchannels
+                if re.match("O(.?)A", name) or re.match("O(.?)P", name)
+            ]
+            orders = [int(n) for c in optical_channels for n in re.findall(r"\d", c)]
             orders = np.unique(np.asarray(orders))
 
             for order in orders:
                 channelA = f"O{order}A"
                 channelP = f"O{order}P"
 
-                if channelA not in list(neaifg.data.keys()) or channelP not in list(neaifg.data.keys()):
-                    print(f"Skipped processing for order: {order}, since A or P is missing!")
+                if channelA not in list(neaifg.data.keys()) or channelP not in list(
+                    neaifg.data.keys()
+                ):
+                    print(
+                        f"Skipped processing for order: {order}, since A or P is missing!"
+                    )
                     continue
                 else:
                     for i in range(pixel_area[0]):
@@ -350,7 +364,7 @@ class ProcessAllPoints(Transformation):
                             pointifg_data[channelA] = neaifg.data[channelA][i, k, :]
                             pointifg_data[channelP] = neaifg.data[channelP][i, k, :]
                             pointifg_data["M"] = neaifg.data["M"][i, k, :]
-                            pointifg = NeaInterferogram(pointifg_data,pointifg_params)
+                            pointifg = NeaInterferogram(pointifg_data, pointifg_params)
                             (
                                 ampFullData[i, k, :],
                                 phiFullData[i, k, :],

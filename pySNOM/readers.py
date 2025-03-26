@@ -307,14 +307,12 @@ class NeaSpectrumGeneralReader(Reader):
             while f:
                 line = f.readline()
                 count = count + 1
-                if line[0] not in ("#",'\n'):
+                if line[0] not in ("#", "\n"):
                     break
                 if line[0] == "#":
                     params = self.lineparser(line, params)
             channels = line.split("\t")
-            channels = [
-                channel.strip() for channel in channels[:-1]
-            ]
+            channels = [channel.strip() for channel in channels[:-1]]
 
         return channels, params
 
@@ -335,7 +333,7 @@ class NeaSpectrumGeneralReader(Reader):
             lineterminator="\n",
         ).dropna(axis=1, how="all")
 
-        cols_to_keep = [c for c in data.columns if c != '']
+        cols_to_keep = [c for c in data.columns if c != ""]
         data = data[cols_to_keep]
 
         if self.output == "dict":

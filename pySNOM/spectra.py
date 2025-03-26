@@ -217,13 +217,11 @@ class Tools:
         n = 1
         if params["Scan"] == "Fourier Scan":
             n = 2
-        
+
         for channel in list(data.keys()):
             # Point spectrum
             if params["PixelArea"][1] == 1 and params["PixelArea"][0] == 1:
-                data[channel] = np.reshape(
-                    data[channel], (params["PixelArea"][2] * n)
-                )
+                data[channel] = np.reshape(data[channel], (params["PixelArea"][2] * n))
 
             # Linescan and HyperScan
             else:

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from pySNOM.images import LineLevel, BackgroundPolyFit, SimpleNormalize, DataTypes, mask_from_datacondition, AlignImageStack
+from pySNOM.images import LineLevel, BackgroundPolyFit, SimpleNormalize, DataTypes, AlignImageStack, mask_from_datacondition, dict_from_imagestack
 
 
 class TestLineLevel(unittest.TestCase):
@@ -188,6 +188,14 @@ class TestAlignImageStack(unittest.TestCase):
         out = aligner.transform([image1, image2], shifts, crossrect)
         np.testing.assert_equal(np.shape(out), (2, 29, 90))
 
+class TestHelperFunctions(unittest.TestCase):
+    def test_dictfromimagestack(self):
+        stack = [np.zeros((50, 100)), np.zeros((50, 100))]
+
+        out, outparams = dict_from_imagestack(stack,"O2A")
+
+        self.assertEqual(outparams["PixelArea"], [50,100,2])
+        self.assertTrue("M" in list(out.keys()))
 
 if __name__ == "__main__":
     unittest.main()

@@ -468,7 +468,7 @@ def create_nparray_stack(measlist):
     return stack
 
 
-def dict_from_imagestack(X, channelname, wn=None):
+def dict_from_imagestack(X, channelname, wn=None, is_interferogram = True):
     """Converts the image stack into a pySNOM spectra or interferograms compatible dictionary"""
     final_dict = {}
     params = {}
@@ -479,8 +479,7 @@ def dict_from_imagestack(X, channelname, wn=None):
     params["Averaging"] = 1
     params["Scan"] = "Fourier Scan"
 
-    spectra = X.reshape((X.shape[0], X.shape[1] * X.shape[2]))
-    final_dict[channelname] = np.ravel(spectra, order="F")
+    final_dict[channelname] = flatten_stack(X)
 
     y_loc = np.repeat(np.arange(X.shape[1]), X.shape[2])
     x_loc = np.tile(np.arange(X.shape[2]), X.shape[1])
@@ -488,15 +487,25 @@ def dict_from_imagestack(X, channelname, wn=None):
     final_dict["Row"] = np.repeat(y_loc, X.shape[0])
     final_dict["Column"] = np.repeat(x_loc, X.shape[0])
 
-    if wn is not None:
-        final_dict["Wavenumber"] = np.tile(wn, X.shape[1] * X.shape[2])
+    if is_interferogram:
+        depth_channel_name = "M"
     else:
-        final_dict["Wavenumber"] = np.tile(
+        depth_channel_name = "Wavenumber"
+
+    if wn is not None:
+        final_dict[depth_channel_name] = np.tile(wn, X.shape[1] * X.shape[2])
+    else:
+        final_dict[depth_channel_name] = np.tile(
             np.arange(X.shape[0]), X.shape[1] * X.shape[2]
         )
 
     return final_dict, params
 
+def flatten_stack(imagestack):
+    """ Flatten out values in an image stack to be aneble to add it to spectral dictionaries """
+    imagestack = np.asarray(imagestack)
+    flattened_values = imagestack.reshape((imagestack.shape[0], imagestack.shape[1] * imagestack.shape[2]))
+    return np.ravel(flattened_values, order="F")
 
 def shifted_cross_section(rect1: list, rect2: list):
     """Calculates the cross-section of two rectangle shifted to each other"""

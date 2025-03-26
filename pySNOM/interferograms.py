@@ -5,6 +5,7 @@ from scipy import signal
 from scipy.fft import fft, fftshift
 from scipy.interpolate import CubicSpline, interp1d
 from pySNOM.spectra import NeaSpectrum, SingleChannelSpectrum
+import re
 
 MeasurementModes = Enum("MeasurementModes", ["None", "nanoFTIR"])
 DataTypes = Enum("DataTypes", ["Amplitude", "Phase", "Topography"])
@@ -32,6 +33,14 @@ class NeaInterferogram(NeaSpectrum):
         """Data setter to reshape properly"""
         self._data = Tools.reshape_ifg_data(value, self._parameters)
 
+    def add_channel(self,values,channelname):
+        """Adds a new channel to data dictionary"""
+        if channelname not in list(self._data.keys()):
+            self._data[channelname] = np.reshape(values,(int(self.parameters["PixelArea"][0]),
+                                                        int(self.parameters["PixelArea"][1]),
+                                                        int(self.parameters["PixelArea"][2] * self.parameters["Averaging"])))
+        else:
+            raise ValueError
 
 # TRANSFORMATIONS ------------------------------------------------------------------------------------------------------------------
 class Transformation:
@@ -64,7 +73,6 @@ class ProcessInterferogram(Transformation):
         stepsizes = np.mean(np.diff(maxis * 1e6))
         Fs = 1 / np.mean(stepsizes)
         faxis = (Fs / 2) * np.linspace(-1, 1, len(complex_spectrum)) * 10000 / 2
-
         return (
             complex_spectrum[int(len(faxis) / 2) - 1 : -1],
             faxis[int(len(faxis) / 2) - 1 : -1],
@@ -319,37 +327,49 @@ class ProcessAllPoints(Transformation):
             pointifg_data = dict()
             pointifg_params = dict()
             pointifg_params["PixelArea"] = [1, 1, neaifg.parameters["PixelArea"][2]]
+            pointifg_params["Scan"] = "Fourier Scan"
+            pointifg_params["Averaging"] = neaifg.parameters["Averaging"]
 
             spectra = NeaSpectrum({}, {}, scantype=neaifg.scantype)
 
-            for order in range(6):
+            allchannels = list(neaifg.data.keys())
+            optical_channels = [name for name in allchannels if re.match('O(.?)A', name) or re.match('O(.?)P', name)]
+            orders = [int(n) for c in optical_channels for n in re.findall(r'\d',c)]
+            orders = np.unique(np.asarray(orders))
+
+            for order in orders:
                 channelA = f"O{order}A"
                 channelP = f"O{order}P"
-                for i in range(pixel_area[0]):
-                    for k in range(pixel_area[1]):
-                        pointifg_data[channelA] = neaifg.data[channelA][i, k, :]
-                        pointifg_data[channelP] = neaifg.data[channelP][i, k, :]
-                        pointifg_data["M"] = neaifg.data["M"][i, k, :]
 
-                        (
-                            ampFullData[i, k, :],
-                            phiFullData[i, k, :],
-                            fFullData[i, k, :],
-                        ) = ProcessSingleChannel(
-                            order,
-                            method=self.method,
-                            apod=self.apod,
-                            windowtype=self.windowtype,
-                            nzeros=self.nzeros,
-                            interpmethod=self.interpmethod,
-                            simpleoutput=True,
-                        ).transform(
-                            neaifg
-                        )
+                if channelA not in list(neaifg.data.keys()) or channelP not in list(neaifg.data.keys()):
+                    print(f"Skipped processing for order: {order}, since A or P is missing!")
+                    continue
+                else:
+                    for i in range(pixel_area[0]):
+                        for k in range(pixel_area[1]):
+                            pointifg_data[channelA] = neaifg.data[channelA][i, k, :]
+                            pointifg_data[channelP] = neaifg.data[channelP][i, k, :]
+                            pointifg_data["M"] = neaifg.data["M"][i, k, :]
+                            pointifg = NeaInterferogram(pointifg_data,pointifg_params)
+                            (
+                                ampFullData[i, k, :],
+                                phiFullData[i, k, :],
+                                fFullData[i, k, :],
+                            ) = ProcessSingleChannel(
+                                order,
+                                method=self.method,
+                                apod=self.apod,
+                                windowtype=self.windowtype,
+                                nzeros=self.nzeros,
+                                interpmethod=self.interpmethod,
+                                simpleoutput=True,
+                            ).transform(
+                                pointifg
+                            )
 
-                spectra.data[channelA] = ampFullData
-                spectra.data[channelP] = phiFullData
-                spectra.data["Wavenumber"] = fFullData
+                    spectra.data[channelA] = ampFullData
+                    spectra.data[channelP] = phiFullData
+                    spectra.data["Wavenumber"] = fFullData
 
             spectra._parameters["PixelArea"] = pixel_area
 

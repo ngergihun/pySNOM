@@ -383,7 +383,7 @@ class Tools:
 
     @staticmethod
     def reshape_ifg_data(data, params):
-        if params["PixelArea"][1] != 1 and params["PixelArea"][0] != 1:
+        if params["PixelArea"][1] != 1 or params["PixelArea"][0] != 1:
             for channel in list(data.keys()):
                 data[channel] = np.reshape(
                     data[channel],

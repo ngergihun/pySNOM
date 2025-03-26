@@ -3,9 +3,8 @@ import gsffile
 import numpy as np
 import pandas as pd
 import os
-import re
 import pathlib
-
+import re
 
 class Reader:
     def __init__(self, fullfilepath=None):
@@ -367,14 +366,17 @@ class ImageStackReader(Reader):
                 txtpath = recreate_infofile_name_from_path(path)
                 inforeader = NeaInfoReader(txtpath)
                 infodict = inforeader.read()
-
-                wn = infodict["TargetWavelength"]
-                if wn < 50.0:
-                    wn = 10000 / wn
-                wns.append(wn)
+                if infodict["TargetWavelength"] == "":
+                    wn = infodict["InterferometerCenterDistance"][0]
+                    wns.append(wn)
+                else:
+                    wn = infodict["TargetWavelength"]
+                    if wn < 50.0:
+                        wn = 10000 / wn
+                    wns.append(wn)
             except:
                 wns.append(i)
-
+        
         idxs = np.argsort(np.asarray(wns))
         imagestack = [imagestack[i] for i in idxs]
         wns = [wns[i] for i in idxs]

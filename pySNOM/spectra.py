@@ -213,50 +213,25 @@ class NormalizeSpectrum(Transformation):
 # TOOLS ------------------------------------------------------------------------------------------------------------------
 class Tools:
     def reshape_spectrum_data(data, params):
+        # To compensate for the zero-filling that NeaSpec does
+        n = 1
+        if params["Scan"] == "Fourier Scan":
+            n = 2
+
         for channel in list(data.keys()):
             # Point spectrum
             if params["PixelArea"][1] == 1 and params["PixelArea"][0] == 1:
-                # NeaSpec tends to do zero-filling: 4 when processing spectra
-                if params["Scan"] == "Fourier Scan":
-                    data[channel] = np.reshape(
-                        data[channel], (params["PixelArea"][2] * 2)
-                    )
-                else:
-                    data[data[channel]] = np.reshape(
-                        data[channel], (params["PixelArea"][2])
-                    )
-            # LineScan
-            elif params["PixelArea"][1] == 1 and params["PixelArea"][0] != 1:
-                # NeaSpec tends to do zero-filling: 4 when processing spectra
-                if params["Scan"] == "Fourier Scan":
-                    data[data[channel]] = np.reshape(
-                        data[channel],
-                        (params["PixelArea"][0], params["PixelArea"][2] * 2),
-                    )
-                else:
-                    data[data[channel]] = np.reshape(
-                        data[channel], (params["PixelArea"][0], params["PixelArea"][2])
-                    )
-            # HyperScan
+                data[channel] = np.reshape(data[channel], (params["PixelArea"][2] * n))
+
+            # Linescan and HyperScan
             else:
-                # NeaSpec tends to do zero-filling: 4 when processing spectra
-                if params["Scan"] == "Fourier Scan":
-                    data[data[channel]] = np.reshape(
-                        data[channel],
-                        (
-                            params["PixelArea"][0],
-                            params["PixelArea"][1],
-                            params["PixelArea"][2] * 2,
-                        ),
-                    )
-                else:
-                    data[data[channel]] = np.reshape(
-                        data[channel],
-                        (
-                            params["PixelArea"][0],
-                            params["PixelArea"][1],
-                            params["PixelArea"][2],
-                        ),
-                    )
+                data[data[channel]] = np.reshape(
+                    data[channel],
+                    (
+                        params["PixelArea"][0],
+                        params["PixelArea"][1],
+                        params["PixelArea"][2] * n,
+                    ),
+                )
 
         return data

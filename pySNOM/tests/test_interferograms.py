@@ -21,14 +21,25 @@ class test_Neaspectrum(unittest.TestCase):
             os.path.join(pySNOM.__path__[0], fdata)
         )
         data, measparams = data_reader.read()
-
         self.ifg = NeaInterferogram(data, measparams, filename=fdata)
+
+        f = "datasets/testifg_multipoints.txt"
+        file_reader = readers.NeaInterferogramReader(
+            os.path.join(pySNOM.__path__[0], f)
+        )
+        data, params = file_reader.read()
+        self.multi_ifg = NeaInterferogram(data, params)
 
     def test_pointinterferogram_object(self):
         np.testing.assert_almost_equal(self.ifg.data["O2A"][100], 9.564073)
         np.testing.assert_string_equal(self.ifg.parameters["Scan"], "Fourier Scan")
         np.testing.assert_string_equal(self.ifg.scantype, "Point")
         np.testing.assert_equal(np.shape(self.ifg.data["O2A"])[0], 2048)
+
+    def test_multipointinterferogram_object(self):
+        np.testing.assert_array_equal(
+            self.multi_ifg.data["Run"][1, 0], np.asarray([0, 0, 0, 1, 1, 1])
+        )
 
     def test_singlechannel_process(self):
         a2, p2, wn2 = ProcessSingleChannel(order=2, simpleoutput=True).transform(

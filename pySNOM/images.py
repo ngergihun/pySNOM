@@ -16,9 +16,7 @@ ChannelTypes = Enum("ChannelTypes", ["None", "Optical", "Mechanical"])
 class Measurement:
     def __init__(self, data, filename=None, info=None, mode="None"):
         self.filename = filename
-        self.mode = (
-            mode
-        )
+        self.mode = mode
         self._data = data
         self.info = info
 

@@ -232,6 +232,7 @@ class LineLevel(MaskedTransformation):
             else:
                 norm = np.nanmedian(data[1:] - data[:-1], axis=1, keepdims=True)
                 norm = np.append(norm,0)  # difference does not make sense for the last row
+            norm = np.reshape(norm, (norm.size,1))
         else:
             if self.datatype == DataTypes.Amplitude:
                 norm = 1

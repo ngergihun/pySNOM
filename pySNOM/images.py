@@ -187,16 +187,32 @@ def type_from_channelname(channelname):
 
     return channeltype, order, datatype
 
-class Transformation:
 
-    def calculate(self, data, mask=None):
-        raise NotImplementedError()
+class Transformation:
 
     def transform(self, data):
         raise NotImplementedError()
 
 
-class LineLevel(Transformation):
+class MaskedTransformation(Transformation):
+
+    def calculate(self, data, mask=None):
+        raise NotImplementedError()
+    
+    def correct(self, data, correction):
+        """ Applies the calculated corrections to the data """
+        if self.datatype == DataTypes.Amplitude:
+            return data / correction
+        else:
+            return data - correction
+
+    def transform(self, data, mask=None):
+        """ Calculates and applies the corrections to the data taking into account the mask if given """
+        correction = self.calculate(data, mask=mask)
+        return self.correct(data, correction)
+
+
+class LineLevel(MaskedTransformation):
     def __init__(self, method="median", datatype=DataTypes.Phase):
         self.method = method
         self.datatype = datatype
@@ -223,13 +239,6 @@ class LineLevel(Transformation):
                 norm = 0
 
         return norm
-
-    def transform(self, data, correction):
-        """ Applies the calculated corrections to the data """
-        if self.datatype == DataTypes.Amplitude:
-            return data / correction
-        else:
-            return data - correction
 
 
 class RotatePhase(Transformation):
@@ -259,7 +268,7 @@ class SelfReference(Transformation):
             )
 
 
-class SimpleNormalize(Transformation):
+class SimpleNormalize(MaskedTransformation):
     def __init__(self, method="median", value=1.0, datatype=DataTypes.Phase):
         self.method = method
         self.value = value
@@ -281,16 +290,9 @@ class SimpleNormalize(Transformation):
                 norm = np.nanmin(data)
 
         return norm
-    
-    def transform(self, data, correction):
-        """ Applies the calculated corrections to the data """
-        if self.datatype == DataTypes.Amplitude:
-            return data / correction
-        else:
-            return data - correction
                 
 
-class BackgroundPolyFit(Transformation):
+class BackgroundPolyFit(MaskedTransformation):
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
@@ -333,13 +335,7 @@ class BackgroundPolyFit(Transformation):
             print("X and Y order must be integer!")
 
         return background
-        
-    def transform(self, data, correction):
-        """ Applies the calculated corrections to the data """
-        if self.datatype == DataTypes["Amplitude"]:
-            return data/correction
-        else:
-            return data-correction
+
         
 # TODO: Helper functions to create masks or turn other types of masks into 1/Nan mask
 def mask_from_booleans(bool_mask, bad_values = False):

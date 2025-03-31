@@ -314,7 +314,7 @@ class NeaSpectrumGeneralReader(Reader):
                 if line[0] == "#":
                     params = self.lineparser(line, params)
             channels = line.split("\t")
-            channels = [channel.strip() for channel in channels]
+            channels = [channel.strip() for channel in channels[:-1]]
 
         return channels, params
 

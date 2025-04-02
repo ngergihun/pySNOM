@@ -336,7 +336,10 @@ class ProcessAllPoints(Transformation):
             pointifg_params["Scan"] = "Fourier Scan"
             pointifg_params["Averaging"] = neaifg.parameters["Averaging"]
 
-            spectra = NeaSpectrum({}, {}, scantype=neaifg.scantype)
+            spectra_params = dict()
+            spectra_params["Scan"] = "Fourier Scan"
+            spectra_params["PixelArea"] = pixel_area
+            spectra = NeaSpectrum({}, spectra_params, scantype=neaifg.scantype)
 
             allchannels = list(neaifg.data.keys())
             optical_channels = [
@@ -384,8 +387,6 @@ class ProcessAllPoints(Transformation):
                     spectra.data[channelA] = ampFullData
                     spectra.data[channelP] = phiFullData
                     spectra.data["Wavenumber"] = fFullData
-
-            spectra._parameters["PixelArea"] = pixel_area
 
         return spectra
 

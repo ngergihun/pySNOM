@@ -58,7 +58,7 @@ class TestReaders(unittest.TestCase):
         np.testing.assert_almost_equal(data["O2A"][0], 0.1600194)
         np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
 
-    def test_general_reader_spectrum(self):
+    def test_legacy_nea_reader(self):
         f = "datasets/neafile_test_ifg.nea"
         file_reader = readers.NeaFileLegacyReader(
             os.path.join(pySNOM.__path__[0], f)

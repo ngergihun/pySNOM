@@ -37,28 +37,9 @@ class TestReaders(unittest.TestCase):
         np.testing.assert_almost_equal(data["TargetWavelength"], 6.006)
         np.testing.assert_string_equal(data["DemodulationMode"], "PsHet")
 
-    def test_spectrumread(self):
-        f = "datasets/testspectrum_singlepoint.txt"
-        file_reader = readers.NeaSpectrumReader(os.path.join(pySNOM.__path__[0], f))
-        data, params = file_reader.read()
-
-        np.testing.assert_almost_equal(data["O2A"][0], 0.1600194)
-        np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
-
-    def test_interferogramread(self):
-        f = "datasets/testifg_singlepoint.txt"
-        file_reader = readers.NeaInterferogramReader(
-            os.path.join(pySNOM.__path__[0], f)
-        )
-        data, params = file_reader.read()
-
-        np.testing.assert_almost_equal(data["O2A"][0], 9.580825)
-        np.testing.assert_almost_equal(params["Regulator"][0], 3.767854)
-        np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
-
     def test_general_reader_ifg(self):
         f = "datasets/testifg_singlepoint.txt"
-        file_reader = readers.NeaSpectrumGeneralReader(
+        file_reader = readers.NeaSpectralReader(
             os.path.join(pySNOM.__path__[0], f)
         )
         data, params = file_reader.read()
@@ -69,7 +50,7 @@ class TestReaders(unittest.TestCase):
 
     def test_general_reader_spectrum(self):
         f = "datasets/testspectrum_singlepoint.txt"
-        file_reader = readers.NeaSpectrumGeneralReader(
+        file_reader = readers.NeaSpectralReader(
             os.path.join(pySNOM.__path__[0], f)
         )
         data, params = file_reader.read()

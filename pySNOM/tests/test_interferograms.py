@@ -17,14 +17,14 @@ class test_Neaspectrum(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
         fdata = "datasets/testifg_singlepoint.txt"
-        data_reader = readers.NeaInterferogramReader(
+        data_reader = readers.NeaSpectralReader(
             os.path.join(pySNOM.__path__[0], fdata)
         )
         data, measparams = data_reader.read()
         self.ifg = NeaInterferogram(data, measparams, filename=fdata)
 
         f = "datasets/testifg_multipoints.txt"
-        file_reader = readers.NeaInterferogramReader(
+        file_reader = readers.NeaSpectralReader(
             os.path.join(pySNOM.__path__[0], f)
         )
         data, params = file_reader.read()

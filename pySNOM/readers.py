@@ -48,6 +48,7 @@ class GsfReader(Reader):
         )
         return channel
 
+
 class NeaHeaderReader(Reader):
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
@@ -126,7 +127,7 @@ class NeaInfoReader(NeaHeaderReader):
     def read(self):
         _, infodict = super().read()
         return infodict
-    
+
 
 class NeaSpectralReader(Reader):
     def __init__(self, fullfilepath=None, output="dict"):
@@ -191,7 +192,7 @@ class ImageStackReader(Reader):
                     wns.append(wn)
             except:
                 wns.append(i)
-        
+
         idxs = np.argsort(np.asarray(wns))
         imagestack = [imagestack[i] for i in idxs]
         wns = [wns[i] for i in idxs]
@@ -275,7 +276,11 @@ class NeaFileLegacyReader(Reader):
                     C_data[i * len(runs) : (i + 1) * len(runs), :]
                 )
 
-            params["PixelArea"] = [int(data["Row"].max() + 1), int(data["Column"].max() + 1), np.shape(C_data)[1]]
+            params["PixelArea"] = [
+                int(data["Row"].max() + 1),
+                int(data["Column"].max() + 1),
+                np.shape(C_data)[1],
+            ]
             params["Scan"] = "Fourier Scan"
 
         return data, params

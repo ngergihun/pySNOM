@@ -47,216 +47,12 @@ class GsfReader(Reader):
         )
         return channel
 
-
-class NeaInfoReader(Reader):
+class NeaHeaderReader(Reader):
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
-    def read(self):
-        # reader tested for neascan version 2.1.10719.0
-        fid = open(self.filename, errors="replace")
-        infodict = {}
-
-        linestring = ""
-        Nlines = 0
-
-        while "Version:" not in linestring:
-            Nlines += 1
-            linestring = fid.readline()
-            if Nlines > 1:
-                ct = linestring.split("\t")
-                fieldname = ct[0][2:-1]
-                fieldname = fieldname.replace(" ", "")
-
-                if "Scanner Center Position" in linestring:
-                    fieldname = fieldname[:-5]
-                    infodict[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Scan Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    infodict[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Pixel Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    infodict[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
-
-                elif "Interferometer Center/Distance" in linestring:
-                    fieldname = fieldname.replace("/", "")
-                    infodict[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Regulator" in linestring:
-                    fieldname = fieldname[:-7]
-                    infodict[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Q-Factor" in linestring:
-                    fieldname = fieldname.replace("-", "")
-                    infodict[fieldname] = float(ct[2])
-
-                else:
-                    fieldname = ct[0][2:-1]
-                    fieldname = fieldname.replace(" ", "")
-                    val = ct[2]
-                    val = val.replace(",", "")
-                    try:
-                        infodict[fieldname] = float(val)
-                    except:
-                        infodict[fieldname] = val.strip()
-        fid.close()
-        return infodict
-
-
-class NeaSpectrumReader(Reader):
-    def __init__(self, fullfilepath=None):
-        super().__init__(fullfilepath)
-
-    def read(self):
-        # reader tested for neascan version 2.1.10719.0
-        fid = open(self.filename, errors="replace")
-        data = {}
-        params = {}
-
-        linestring = fid.readline()
-        Nlines = 1
-
-        while "Row" not in linestring:
-            Nlines += 1
-            linestring = fid.readline()
-            if Nlines > 1:
-                ct = linestring.split("\t")
-                fieldname = ct[0][2:-1]
-                fieldname = fieldname.replace(" ", "")
-
-                if "Scanner Center Position" in linestring:
-                    fieldname = fieldname[:-5]
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Scan Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Pixel Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
-
-                elif "Interferometer Center/Distance" in linestring:
-                    fieldname = fieldname.replace("/", "")
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Regulator" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Q-Factor" in linestring:
-                    fieldname = fieldname.replace("-", "")
-                    params[fieldname] = float(ct[2])
-
-                else:
-                    fieldname = ct[0][2:-1]
-                    fieldname = fieldname.replace(" ", "")
-                    val = ct[2]
-                    val = val.replace(",", "")
-                    try:
-                        params[fieldname] = float(val)
-                    except:
-                        params[fieldname] = val.strip()
-
-        channels = linestring.split("\t")
-        fid.close()
-
-        if "PTE+" in params["Scan"]:
-            C_data = np.genfromtxt(self.filename, skip_header=Nlines, encoding="utf-8")
-        else:
-            C_data = np.genfromtxt(self.filename, skip_header=Nlines)
-
-        for i in range(len(channels) - 1):
-            data[channels[i]] = C_data[:, i]
-
-        return data, params
-
-
-class NeaInterferogramReader(Reader):
-    def __init__(self, fullfilepath=None):
-        super().__init__(fullfilepath)
-
-    def read(self):
-        # reader tested for neascan version 2.1.10719.0
-        fid = open(self.filename, errors="replace")
-        data = {}
-        params = {}
-
-        linestring = fid.readline()
-        Nlines = 1
-
-        while "Version" not in linestring:
-            Nlines += 1
-            linestring = fid.readline()
-            if Nlines > 1:
-                ct = linestring.split("\t")
-                fieldname = ct[0][2:-1]
-                fieldname = fieldname.replace(" ", "")
-
-                if "Scanner Center Position" in linestring:
-                    fieldname = fieldname[:-5]
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Scan Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Pixel Area" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
-
-                elif "Averaging" in linestring:
-                    # fieldname = fieldname[:-7]
-                    params[fieldname] = int(ct[2])
-
-                elif "Interferometer Center/Distance" in linestring:
-                    fieldname = fieldname.replace("/", "")
-                    params[fieldname] = [float(ct[2]), float(ct[3])]
-
-                elif "Regulator" in linestring:
-                    fieldname = fieldname[:-7]
-                    params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
-
-                elif "Q-Factor" in linestring:
-                    fieldname = fieldname.replace("-", "")
-                    params[fieldname] = float(ct[2])
-
-                else:
-                    fieldname = ct[0][2:-1]
-                    fieldname = fieldname.replace(" ", "")
-                    val = ct[2]
-                    val = val.replace(",", "")
-                    try:
-                        params[fieldname] = float(val)
-                    except:
-                        params[fieldname] = val.strip()
-
-        if "Version:" in linestring:
-            linestring = fid.readline()
-            channels = linestring.split("\t")
-            for i, channel in enumerate(channels):
-                channels[i] = channel.split(" ")[0]
-        else:
-            channels = linestring.split("\t")
-
-        fid.close()
-
-        C_data = np.genfromtxt(self.filename, skip_header=Nlines)
-
-        for i in range(len(channels) - 1):
-            data[channels[i]] = C_data[1:, i]
-
-        return data, params
-
-
-class NeaSpectrumGeneralReader(Reader):
-    def __init__(self, fullfilepath=None, output="dict"):
-        super().__init__(fullfilepath)
-        self.output = output
-
-    def lineparser(self, linestring, params: dict):
+    @staticmethod
+    def parseline(linestring, params={}):
         ct = linestring.split("\t")
         fieldname = ct[0][2:-1]
         fieldname = fieldname.replace(" ", "")
@@ -300,7 +96,7 @@ class NeaSpectrumGeneralReader(Reader):
 
         return params
 
-    def read_header(self):
+    def read(self):
         params = {}
         with open(self.filename, encoding="utf8") as f:
             # Read www.neaspec.com
@@ -309,19 +105,37 @@ class NeaSpectrumGeneralReader(Reader):
             while f:
                 line = f.readline()
                 count = count + 1
-                if line[0] not in ("#", "\n"):
+                try:
+                    if line[0] not in ("#", "\n"):
+                        break
+                    if line[0] == "#":
+                        params = NeaHeaderReader.parseline(line, params)
+                except IndexError:
                     break
-                if line[0] == "#":
-                    params = self.lineparser(line, params)
             channels = line.split("\t")
             channels = [channel.strip() for channel in channels[:-1]]
 
         return channels, params
 
+
+class NeaInfoReader(NeaHeaderReader):
+    def __init__(self, fullfilepath=None):
+        super().__init__(fullfilepath)
+
+    def read(self):
+        _, infodict = super().read()
+        return infodict
+    
+
+class NeaSpectralReader(Reader):
+    def __init__(self, fullfilepath=None, output="dict"):
+        super().__init__(fullfilepath)
+        self._output = output
+
     def read(self):
         data = {}
 
-        channels, params = self.read_header()
+        channels, params = NeaHeaderReader(self.filename).read()
         channels.append("")
 
         count = len(list(params.keys())) + 2
@@ -338,7 +152,7 @@ class NeaSpectrumGeneralReader(Reader):
         cols_to_keep = [c for c in data.columns if c != ""]
         data = data[cols_to_keep]
 
-        if self.output == "dict":
+        if self._output == "dict":
             data = data.to_dict("list")
             for key in list(data.keys()):
                 data[key] = np.asarray(data[key])

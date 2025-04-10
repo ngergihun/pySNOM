@@ -3,7 +3,7 @@ import gsffile
 import numpy as np
 import pandas as pd
 import os
-import pathlib
+from pathlib import PurePath
 import re
 
 
@@ -213,18 +213,7 @@ def get_wl_from_infofile(infodict: dict):
 def get_wl_from_filename(filename):
     """Returns the wavelength from the filename. If not found, returns None"""
 
-    pattern1 = ["_", "-"]
-    pattern2 = ["_cm-1", "-cm-1", "cm-1"]
-
-    wl = None
-    for p1 in pattern1:
-        for p2 in pattern2:
-            result = re.search(p1 + "(.*)" + p2, filename)
-            if result:
-                wl = result.group(1)
-                break
-
-    return wl
+    return re.findall(r'(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))', PurePath(filename).name)[0]
 
 
 def get_filenames(folder: str, pattern: str):
@@ -245,11 +234,11 @@ def get_filenames(folder: str, pattern: str):
 def recreate_infofile_name_from_path(filepath: str):
     """Recreates the name of the info file from the path of the data file"""
 
-    pathparts = list(pathlib.PurePath(filepath).parts)
+    pathparts = list(PurePath(filepath).parts)
     newparts = pathparts[:-1]
     newparts.append(pathparts[-2] + ".txt")
 
-    return str(pathlib.PurePath(*newparts))
+    return str(PurePath(*newparts))
 
 
 class NeaFileLegacyReader(Reader):

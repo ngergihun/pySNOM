@@ -95,7 +95,7 @@ class NeaHeaderReader(Reader):
                 params[fieldname] = float(val)
             except:
                 params[fieldname] = val.strip()
-
+        print(params[fieldname])
         return params
 
     def read(self):
@@ -213,8 +213,14 @@ def get_wl_from_infofile(infodict: dict):
 def get_wl_from_filename(filename):
     """Returns the wavelength from the filename. If not found, returns None"""
 
-    return re.findall(r'(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))', PurePath(filename).name)[0]
+    wn = re.findall(r'(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))', PurePath(filename).name)
 
+    if wn:
+        wn = float(wn[0])
+    else:
+        wn = None
+        
+    return wn
 
 def get_filenames(folder: str, pattern: str):
     """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""

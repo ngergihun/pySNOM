@@ -182,14 +182,8 @@ class ImageStackReader(Reader):
                 txtpath = recreate_infofile_name_from_path(path)
                 inforeader = NeaInfoReader(txtpath)
                 infodict = inforeader.read()
-                if infodict["TargetWavelength"] == "":
-                    wn = infodict["InterferometerCenterDistance"][0]
-                    wns.append(wn)
-                else:
-                    wn = infodict["TargetWavelength"]
-                    if wn < 50.0:
-                        wn = 10000 / wn
-                    wns.append(wn)
+                wn = get_wl_from_infofile(infodict)
+                wns.append(wn)
             except:
                 wns.append(i)
 
@@ -199,8 +193,40 @@ class ImageStackReader(Reader):
 
         return imagestack, wns
 
+def get_wl_from_infofile(infodict: dict):
+    """Returns the wavelength from the info file. If not found, returns 0.0"""
+    try:
+        if infodict["TargetWavelength"] == "":
+            wn = infodict["InterferometerCenterDistance"][0]
+        else:
+            wn = infodict["TargetWavelength"]
+            # NeaSpec is not consistent in the units of the wavelength. 
+            # Sometimes it is in cm-1, sometimes in um.
+            if wn < 50.0:
+                wn = 10000 / wn
+    except:
+        wn = None
+    return wn
 
-def get_filenames(folder, pattern):
+
+def get_wl_from_filename(filename):
+    """Returns the wavelength from the filename. If not found, returns None"""
+
+    pattern1 = ["_","-"]
+    pattern2 = ["_cm-1","-cm-1","cm-1"]
+
+    wl = None
+    for p1 in pattern1:
+        for p2 in pattern2:
+            result = re.search(p1 + '(.*)' + p2, filename)
+            if result:
+                wl = result.group(1)
+                break
+
+    return wl
+
+
+def get_filenames(folder: str, pattern: str):
     """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""
 
     filepaths = []
@@ -215,7 +241,7 @@ def get_filenames(folder, pattern):
     return filepaths
 
 
-def recreate_infofile_name_from_path(filepath):
+def recreate_infofile_name_from_path(filepath: str):
     """Recreates the name of the info file from the path of the data file"""
 
     pathparts = list(pathlib.PurePath(filepath).parts)

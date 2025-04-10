@@ -22,7 +22,7 @@ class GwyReader(Reader):
         gwyobj = gwyfile.load(self.filename)
         allchannels = gwyfile.util.get_datafields(gwyobj)
 
-        if self.channelname == None:
+        if self.channelname is None:
             return allchannels
         else:
             # Read channels from gwyfile and return only a specific one
@@ -193,6 +193,7 @@ class ImageStackReader(Reader):
 
         return imagestack, wns
 
+
 def get_wl_from_infofile(infodict: dict):
     """Returns the wavelength from the info file. If not found, returns 0.0"""
     try:
@@ -200,7 +201,7 @@ def get_wl_from_infofile(infodict: dict):
             wn = infodict["InterferometerCenterDistance"][0]
         else:
             wn = infodict["TargetWavelength"]
-            # NeaSpec is not consistent in the units of the wavelength. 
+            # NeaSpec is not consistent in the units of the wavelength.
             # Sometimes it is in cm-1, sometimes in um.
             if wn < 50.0:
                 wn = 10000 / wn
@@ -212,13 +213,13 @@ def get_wl_from_infofile(infodict: dict):
 def get_wl_from_filename(filename):
     """Returns the wavelength from the filename. If not found, returns None"""
 
-    pattern1 = ["_","-"]
-    pattern2 = ["_cm-1","-cm-1","cm-1"]
+    pattern1 = ["_", "-"]
+    pattern2 = ["_cm-1", "-cm-1", "cm-1"]
 
     wl = None
     for p1 in pattern1:
         for p2 in pattern2:
-            result = re.search(p1 + '(.*)' + p2, filename)
+            result = re.search(p1 + "(.*)" + p2, filename)
             if result:
                 wl = result.group(1)
                 break
@@ -288,7 +289,7 @@ class NeaFileLegacyReader(Reader):
                 runs = np.unique(meta["Run"])
             else:
                 runs = [0]
-            
+
             Max_row = len(np.unique(meta["Row"]))
             Max_col = len(np.unique(meta["Column"]))
             Max_run = len(runs)
@@ -305,9 +306,7 @@ class NeaFileLegacyReader(Reader):
                     data[name] = np.array(meta[name])
 
             for i in range(len(channels)):
-                data[channels[i]] = np.ravel(
-                    C_data[i * Max_run : (i + 1) * Max_run, :]
-                )
+                data[channels[i]] = np.ravel(C_data[i * Max_run : (i + 1) * Max_run, :])
 
         alpha = 0
         beta = 0
@@ -319,7 +318,9 @@ class NeaFileLegacyReader(Reader):
             if beta == Max_row:
                 beta = 0
                 alpha = alpha + 1
-            data["Run"][i : i + Max_omega * Max_run] = np.repeat(np.arange(Max_run),Max_omega)
+            data["Run"][i : i + Max_omega * Max_run] = np.repeat(
+                np.arange(Max_run), Max_omega
+            )
             data["Column"][i : i + Max_omega * Max_run] = alpha
             data["Row"][i : i + Max_omega * Max_run] = beta
             beta = beta + 1

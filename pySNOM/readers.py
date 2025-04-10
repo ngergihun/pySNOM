@@ -261,7 +261,14 @@ class NeaFileLegacyReader(Reader):
             if "Run" in h:
                 runs = np.unique(meta["Run"])
             else:
-                runs = [1]
+                runs = [0]
+            
+            Max_row = len(np.unique(meta["Row"]))
+            Max_col = len(np.unique(meta["Column"]))
+            Max_run = len(runs)
+            Max_omega = np.shape(C_data)[1]
+
+            N_rows = Max_row * Max_col * Max_run * Max_omega
 
             indexes = np.unique(meta["Channel"], return_index=True)[1]
             channels = [meta["Channel"][index] for index in sorted(indexes)]
@@ -273,13 +280,28 @@ class NeaFileLegacyReader(Reader):
 
             for i in range(len(channels)):
                 data[channels[i]] = np.ravel(
-                    C_data[i * len(runs) : (i + 1) * len(runs), :]
+                    C_data[i * Max_run : (i + 1) * Max_run, :]
                 )
 
+        alpha = 0
+        beta = 0
+        data["Run"] = np.zeros(N_rows)
+        data["Column"] = np.zeros(N_rows)
+        data["Row"] = np.zeros(N_rows)
+
+        for i in range(0, N_rows, Max_omega * Max_run):
+            if beta == Max_row:
+                beta = 0
+                alpha = alpha + 1
+            data["Run"][i : i + Max_omega * Max_run] = np.repeat(np.arange(Max_run),Max_omega)
+            data["Column"][i : i + Max_omega * Max_run] = alpha
+            data["Row"][i : i + Max_omega * Max_run] = beta
+            beta = beta + 1
+
             params["PixelArea"] = [
-                int(data["Row"].max() + 1),
-                int(data["Column"].max() + 1),
-                np.shape(C_data)[1],
+                Max_row,
+                Max_col,
+                Max_omega,
             ]
             params["Scan"] = "Fourier Scan"
 

@@ -76,7 +76,10 @@ class NeaHeaderReader(Reader):
 
         elif "Interferometer Center/Distance" in linestring:
             fieldname = fieldname.replace("/", "")
-            params[fieldname] = [float(ct[2]), float(ct[3])]
+            params[fieldname] = [
+                float(ct[2].replace(",", "")),
+                float(ct[3].replace(",", "")),
+            ]
 
         elif "Regulator" in linestring:
             fieldname = fieldname[:-7]
@@ -95,7 +98,7 @@ class NeaHeaderReader(Reader):
                 params[fieldname] = float(val)
             except:
                 params[fieldname] = val.strip()
-        print(params[fieldname])
+
         return params
 
     def read(self):
@@ -213,14 +216,17 @@ def get_wl_from_infofile(infodict: dict):
 def get_wl_from_filename(filename):
     """Returns the wavelength from the filename. If not found, returns None"""
 
-    wn = re.findall(r'(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))', PurePath(filename).name)
+    wn = re.findall(
+        r"(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))", PurePath(filename).name
+    )
 
     if wn:
         wn = float(wn[0])
     else:
         wn = None
-        
+
     return wn
+
 
 def get_filenames(folder: str, pattern: str):
     """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""

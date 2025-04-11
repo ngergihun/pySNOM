@@ -117,8 +117,8 @@ class NeaHeaderReader(Reader):
                         params = NeaHeaderReader.parseline(line, params)
                 except IndexError:
                     break
-            channels = line.split("\t")
-            channels = [channel.strip() for channel in channels if channel.strip()!=""]
+
+            channels = line.strip().split("\t")
 
         return channels, params
 

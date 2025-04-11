@@ -118,7 +118,7 @@ class NeaHeaderReader(Reader):
                 except IndexError:
                     break
             channels = line.split("\t")
-            channels = [channel.strip() for channel in channels[:-1]]
+            channels = [channel.strip() for channel in channels if channel.strip()!=""]
 
         return channels, params
 

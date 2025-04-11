@@ -20,11 +20,12 @@ requirements:
     - setuptools_scm
   run:
     - python >=3.10
-    - numpy <2.0.0
-    - agilent-format>=0.4.5
+    - numpy >=1.24.0
     - gwyfile >=0.2.0
     - scipy
     - gsffile
+    - pandas >=1.4.0
+    - scikit-image
 
 test:
   imports:

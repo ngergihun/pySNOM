@@ -297,16 +297,14 @@ class SimpleNormalize(MaskedTransformation):
         return norm
                 
 
-class BackgroundPolyFit(MaskedTransformation):
+class BackgroundPolyFit(Transformation):
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
         self.datatype = datatype
 
-    def calculate(self, data, mask = None):
-        """ Calculates and returns the fitted polynomial background using mask (if given) without applying it to the data"""
-        if mask is not None:
-            data = mask*data
+    def calculate(self, data):
+        """Calculates and returns the fitted polynomial background using mask (if given) without applying it to the data"""
 
         Z = copy.deepcopy(data)
         x = list(range(0, Z.shape[1]))
@@ -340,6 +338,32 @@ class BackgroundPolyFit(MaskedTransformation):
             print("X and Y order must be integer!")
 
         return background
+    
+    def transform(self, data):
+        """Calculates and applies the corrections to the data taking into account the mask if given"""
+        background = self.calculate(data)
+
+        if self.datatype == DataTypes["Amplitude"]:
+            return data / background, background
+        else:
+            return data - background, background
+        
+
+class MaskedBackgroundPolyFit(BackgroundPolyFit,MaskedTransformation):
+    def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
+        self.xorder = int(xorder)
+        self.yorder = int(yorder)
+        self.datatype = datatype
+
+    def calculate(self, data, mask=None):
+        """Calculates and returns the fitted polynomial background using mask (if given) without applying it to the data"""
+        if mask is not None:
+            data = mask * data
+
+        return BackgroundPolyFit.calculate(self,data)
+    
+    def transform(self, data, mask=None):
+        return MaskedTransformation.transform(self, data, mask=mask)
 
         
 # TODO: Helper functions to create masks or turn other types of masks into 1/Nan mask

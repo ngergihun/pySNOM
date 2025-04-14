@@ -2,7 +2,16 @@ import unittest
 
 import numpy as np
 
-from pySNOM.images import LineLevel, BackgroundPolyFit, SimpleNormalize, DataTypes, AlignImageStack, mask_from_datacondition, dict_from_imagestack
+from pySNOM.images import (
+    LineLevel,
+    BackgroundPolyFit,
+    MaskedBackgroundPolyFit,
+    SimpleNormalize,
+    DataTypes,
+    AlignImageStack,
+    mask_from_datacondition,
+    dict_from_imagestack,
+)
 
 
 class TestLineLevel(unittest.TestCase):
@@ -98,15 +107,15 @@ class TestBackgroundPolyFit(unittest.TestCase):
         mask = np.ones([10,10])
         mask[4:8,4:8] = np.nan
 
-        t = BackgroundPolyFit(xorder=1,yorder=1,datatype=DataTypes.Phase)
-        out = t.transform(d,mask=mask)
-        np.testing.assert_almost_equal(out[0,0], 0.0)
-        np.testing.assert_almost_equal(out[9,9], 0.0)
+        t = MaskedBackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Phase)
+        out = t.transform(d, mask=mask)
+        np.testing.assert_almost_equal(out[0, 0], 0.0)
+        np.testing.assert_almost_equal(out[9, 9], 0.0)
 
-        t = BackgroundPolyFit(xorder=1,yorder=1,datatype=DataTypes.Amplitude)
-        out = t.transform(d,mask=mask)
-        np.testing.assert_almost_equal(out[0,0], 1.0)
-        np.testing.assert_almost_equal(out[9,9], 1.0)
+        t = MaskedBackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Amplitude)
+        out = t.transform(d, mask=mask)
+        np.testing.assert_almost_equal(out[0, 0], 1.0)
+        np.testing.assert_almost_equal(out[9, 9], 1.0)
 
     def test_withoutmask(self):
         d = np.ones([10,10])
@@ -114,15 +123,31 @@ class TestBackgroundPolyFit(unittest.TestCase):
         mask = np.ones([10,10])
         mask[4:8,4:8] = np.nan
 
-        t = BackgroundPolyFit(xorder=1,yorder=1,datatype=DataTypes.Phase)
+        t = MaskedBackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Phase)
         out = t.transform(d)
         np.testing.assert_almost_equal(out[0,0], -0.2975206611570238)
         np.testing.assert_almost_equal(out[9,9], -3.439338842975202)
 
-        t = BackgroundPolyFit(xorder=1,yorder=1,datatype=DataTypes.Amplitude)
+        t = MaskedBackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Amplitude)
         out = t.transform(d)
-        np.testing.assert_almost_equal(out[0,0], 0.7707006369426758)
-        np.testing.assert_almost_equal(out[9,9], 0.22525876833718098)
+        np.testing.assert_almost_equal(out[0, 0], 0.7707006369426758)
+        np.testing.assert_almost_equal(out[9, 9], 0.22525876833718098)
+
+    def test_old_version(self):
+        d = np.ones([10, 10])
+        d[4:8, 4:8] = 10
+        mask = np.ones([10, 10])
+        mask[4:8, 4:8] = np.nan
+
+        t = BackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Phase)
+        out, _ = t.transform(d)
+        np.testing.assert_almost_equal(out[0, 0], -0.2975206611570238)
+        np.testing.assert_almost_equal(out[9, 9], -3.439338842975202)
+
+        t = BackgroundPolyFit(xorder=1, yorder=1, datatype=DataTypes.Amplitude)
+        out, _ = t.transform(d)
+        np.testing.assert_almost_equal(out[0, 0], 0.7707006369426758)
+        np.testing.assert_almost_equal(out[9, 9], 0.22525876833718098)
 
 class TestHelperFunction(unittest.TestCase):
 

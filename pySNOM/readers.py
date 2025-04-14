@@ -119,6 +119,7 @@ class NeaHeaderReader(Reader):
                     break
 
             channels = line.strip().split("\t")
+            channels = [channel.strip() for channel in channels]
 
         return channels, params
 

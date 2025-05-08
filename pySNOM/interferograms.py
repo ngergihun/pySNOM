@@ -76,12 +76,12 @@ class ProcessInterferogram(Transformation):
         # Calculate FFT
         complex_spectrum = fftshift(fft(ifg * w, self.nzeros * len(ifg)))
         # Calculate frequency axis
-        stepsizes = np.mean(np.diff(maxis * 1e6))
+        stepsizes = np.median(np.diff(maxis * 1e6))
         Fs = 1 / np.mean(stepsizes)
         faxis = (Fs / 2) * np.linspace(-1, 1, len(complex_spectrum)) * 10000 / 2
         return (
-            complex_spectrum[int(len(faxis) / 2) - 1 : -1],
-            faxis[int(len(faxis) / 2) - 1 : -1],
+            complex_spectrum[int(len(faxis) / 2) : -1],
+            faxis[int(len(faxis) / 2) : -1],
         )
 
 
@@ -439,7 +439,7 @@ class Tools:
             asymWindow2 = windowPart2[int(len(windowPart2) / 2) : int(len(windowPart2))]
         else:
             asymWindow2 = windowPart2[
-                int(len(windowPart2) / 2 + 1) : int(len(windowPart2))
+                int(len(windowPart2) / 2) : int(len(windowPart2))
             ]
 
         return np.concatenate((asymWindow1, asymWindow2))

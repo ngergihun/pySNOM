@@ -356,36 +356,169 @@ class BackgroundPolyFit(Transformation):
         
 
 class MaskedBackgroundPolyFit(BackgroundPolyFit,MaskedTransformation):
+    """
+    Polynomial background fitting with optional masking support.
+
+    This class extends `BackgroundPolyFit` and `MaskedTransformation`
+    to allow polynomial background fitting with the ability to apply a
+    mask to the data during the fitting process.
+
+    Parameters
+    ----------
+    xorder : int, optional
+        Polynomial order in the x-direction. Default is 1.
+    yorder : int, optional
+        Polynomial order in the y-direction. Default is 1.
+    datatype : DataTypes, optional
+        Type of data to be processed. Default is `DataTypes.Phase`.
+
+    Methods
+    -------
+    calculate(data, mask=None)
+        Calculates and returns the fitted polynomial background, applying
+        the mask if provided, but without modifying the input data.
+    
+    transform(data, mask=None)
+        Applies the masked transformation to the data.
+    """
+
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
         self.datatype = datatype
 
     def calculate(self, data, mask=None):
-        """Calculates and returns the fitted polynomial background using mask (if given) without applying it to the data"""
+        """
+        Calculate the fitted polynomial background.
+
+        Applies a mask to the data if provided, then fits a polynomial background.
+        The mask is used only for fitting; the returned background is not masked.
+
+        Parameters
+        ----------
+        data : ndarray
+            Input data array to fit the background to.
+        mask : ndarray of bool, optional
+            Boolean array where True values indicate which data points
+            to include in the fitting.
+
+        Returns
+        -------
+        background : ndarray
+            Fitted polynomial background.
+        """
+
         if mask is not None:
             data = mask * data
 
         return BackgroundPolyFit.calculate(self,data)
     
     def transform(self, data, mask=None):
+        """
+        Transform the data using a masked transformation.
+
+        Parameters
+        ----------
+        data : ndarray
+            Input data array to be transformed.
+        mask : ndarray of bool, optional
+            Boolean mask array. If provided, applies the mask during transformation.
+
+        Returns
+        -------
+        transformed_data : ndarray
+            Transformed data after applying the mask.
+        """
+
         return MaskedTransformation.transform(self, data, mask=mask)
 
 
 # TODO: Helper functions to create masks or turn other types of masks into 1/Nan mask
 def mask_from_booleans(bool_mask, bad_values=False):
-    """Turn a boolean array to an array conatining nans and ones"""
+    """
+    Convert a boolean mask to an array containing NaNs and ones.
+
+    This function takes a boolean array and returns a new array of the same shape,
+    where elements corresponding to `bad_values` are set to `NaN` and others are set to 1.0.
+
+    Parameters
+    ----------
+    bool_mask : array_like of bool
+        Boolean array indicating which elements are considered "bad" or "good".
+    bad_values : bool, optional
+        The boolean value in `bool_mask` that should be treated as "bad" and replaced with `NaN`.
+        Default is False.
+
+    Returns
+    -------
+    mask : ndarray
+        Array of floats with the same shape as `bool_mask`, where "bad" values are `NaN`
+        and all other values are 1.0.
+
+    Notes
+    -----
+    This function is useful for preparing masks for element-wise multiplication
+    where bad regions are masked out via multiplication with `NaN`.
+    """
+    
     mshape = np.shape(bool_mask)
-    return np.where(bool_mask == bad_values, np.nan * np.ones(mshape), np.ones(mshape))
+    return np.where(bool_mask == bad_values, np.full(mshape, np.nan), np.ones(mshape))
 
 
 def mask_from_datacondition(condition):
+    #TODO: Rewrite this
+    """
+    Convert a condition array to a mask with NaNs and ones.
+
+    Creates a mask from a boolean condition array, where elements that evaluate
+    to `True` are replaced with `NaN`, and elements that evaluate to `False` are replaced with 1.0.
+
+    Parameters
+    ----------
+    condition : array_like of bool
+        Boolean array representing a condition on data. `True` values indicate
+        positions to be masked out (replaced with NaN).
+
+    Returns
+    -------
+    mask : ndarray
+        Array of floats with the same shape as `condition`, containing `NaN` where
+        `condition` is `True`, and 1.0 where `condition` is `False`.
+
+    Notes
+    -----
+    Useful for applying element-wise masking via multiplication, where masked-out
+    (bad) regions are set to NaN and others are preserved.
+    """
+
     mshape = np.shape(condition)
-    return np.where(condition, np.nan * np.ones(mshape), np.ones(mshape))
+    return np.where(condition, np.full(mshape, np.nan), np.ones(mshape))
 
 
 class CalculateOpticalFlow(Transformation):
-    """Calculates the pixel coordiate drifts between reference and template image"""
+    """
+    Compute pixel coordinate drifts (optical flow) between a reference and a target image.
+
+    This transformation estimates motion between two images using the TV-L1 optical flow algorithm.
+    It returns the vertical and horizontal displacement fields that align the input image with
+    the reference image.
+
+    Parameters
+    ----------
+    image_ref : ndarray
+        Reference image used as the baseline for computing optical flow. It is internally
+        normalized before flow computation.
+
+    Methods
+    -------
+    transform(image)
+        Calculates the optical flow between the reference image and the input image.
+
+    Examples
+    --------
+    >>> flow_calc = CalculateOpticalFlow(image_ref)
+    >>> v, u = flow_calc.transform(image_moved)
+    """
 
     def __init__(self, image_ref):
         self.image_ref = image_ref
@@ -398,7 +531,33 @@ class CalculateOpticalFlow(Transformation):
 
 
 class WrapImage(Transformation):
-    """Applies the pixel-by-pixel drift correction calculated by OpticalFlow"""
+    """
+    Apply pixel-wise drift correction using precomputed optical flow.
+
+    This transformation warps an image by applying vertical and horizontal displacements
+    (optical flow fields) to correct for pixel shifts or distortions. The displacement
+    fields should be computed beforehand (e.g., using `CalculateOpticalFlow`).
+
+    Parameters
+    ----------
+    v : ndarray
+        Vertical displacement field (row-wise shifts), same shape as the image.
+    u : ndarray
+        Horizontal displacement field (column-wise shifts), same shape as the image.
+
+    Methods
+    -------
+    transform(image)
+        Applies the warp transformation to the input image using the stored displacement fields.
+
+    Examples
+    --------
+    >>> flow_calc = CalculateOpticalFlow(image_ref)
+    >>> v, u = flow_calc.transform(image_moved)
+    >>> v, u = optical_flow_tvl1(image_ref / 255.0, image_moved / 255.0)
+    >>> wrapper = WrapImage(v, u)
+    >>> corrected = wrapper.transform(image_moved)
+    """
 
     def __init__(self, v, u):
         self.v = v

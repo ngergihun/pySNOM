@@ -231,12 +231,12 @@ class LineLevel(MaskedTransformation):
             if self.datatype == DataTypes.Amplitude:
                 diff = data[1:] / data[:-1]
                 diff = np.insert(diff, 0, 1, axis=0)
-                norm = np.cumprod(np.nanmedian(diff, axis=1))
+                norm = np.nancumprod(np.nanmedian(diff, axis=1))
             else:
                 diff = data[1:] - data[:-1]
                 diff = np.insert(diff, 0, 0, axis=0)
-                norm = np.cumsum(np.nanmedian(diff, axis=1))
-            norm = np.tile(norm, (norm.shape[0], 1)).T
+                norm = np.nancumsum(np.nanmedian(diff, axis=1))
+            norm = np.tile(norm, (data.shape[1], 1)).T
             
         else:
             if self.datatype == DataTypes.Amplitude:

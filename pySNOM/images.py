@@ -229,14 +229,15 @@ class LineLevel(MaskedTransformation):
             norm = np.nanmean(data, axis=1, keepdims=True)
         elif self.method == "difference":
             if self.datatype == DataTypes.Amplitude:
-                norm = np.nanmedian(data[1:] / data[:-1], axis=1, keepdims=True)
-                norm = np.append(norm, 1)
+                diff = data[1:] / data[:-1]
+                diff = np.insert(diff, 0, 1, axis=0)
+                norm = np.cumprod(np.nanmedian(diff, axis=1))
             else:
-                norm = np.nanmedian(data[1:] - data[:-1], axis=1, keepdims=True)
-                norm = np.append(
-                    norm, 0
-                )  # difference does not make sense for the last row
-            norm = np.reshape(norm, (norm.size, 1))
+                diff = data[1:] - data[:-1]
+                diff = np.insert(diff, 0, 0, axis=0)
+                norm = np.cumsum(np.nanmedian(diff, axis=1))
+            norm = np.tile(norm, (norm.shape[0], 1)).T
+            
         else:
             if self.datatype == DataTypes.Amplitude:
                 norm = 1

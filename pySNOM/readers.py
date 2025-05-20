@@ -167,16 +167,17 @@ class NeaSpectralReader(Reader):
 
 
 class ImageStackReader(Reader):
-    """Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string int the filename"""
+    """Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string in the filename"""
 
-    def __init__(self, folder=None):
+    def __init__(self, folder=None, folder_pattern=""):
         super().__init__(folder)
         self.folder = self.filename
+        self.folder_pattern = folder_pattern
 
     def read(self, pattern):
         imagestack = []
         wns = []
-        filepaths = get_filenames(self.folder, pattern)
+        filepaths = get_filenames(self.folder, pattern, folderpattern=self.folder_pattern)
 
         for i, path in enumerate(filepaths):
             data_reader = GsfReader(path)
@@ -229,13 +230,13 @@ def get_wl_from_filename(filename):
     return wn
 
 
-def get_filenames(folder: str, pattern: str):
+def get_filenames(folder: str, pattern: str, folderpattern = ""):
     """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""
 
     filepaths = []
 
     for subfolder in os.listdir(folder):
-        if os.path.isdir(os.path.join(folder, subfolder)):
+        if os.path.isdir(os.path.join(folder, subfolder)) and re.search(folderpattern, subfolder):
             for name in os.listdir(os.path.join(folder, subfolder)):
                 if re.search(pattern, name):
                     subpath = os.path.join(subfolder, name)

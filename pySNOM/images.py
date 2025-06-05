@@ -450,41 +450,21 @@ class LaplaceFillIn(Transformation):
         return filled
 
 class RemoveSpikes(Transformation):
-    def __init__(self, threshold = 0.8):
+    def __init__(self, threshold = 0.8, fillin = True):
         self.threshold = threshold
+        self.fillin = fillin
 
-    def transfrom(self, data):
-        """
-        Remove impulse-like spikes from an image by replacing values that are
-        statistical outliers compared to their neighbors.
-
-        Parameters:
-        - im_in (2D np.ndarray): Input grayscale image.
-        - thresh (float): Threshold in standard deviations to define spikes.
-
-        Returns:
-        - z (2D np.ndarray): Image with spikes removed.
-        """
-        z = np.array(data, dtype=float)
-        M, N = z.shape
-
-        # Define a 3x3 neighborhood excluding the center
-        def is_spike(val):
-            center = val[4]
-            neighbors = np.concatenate([val[:4], val[5:]])
-            mean = np.mean(neighbors)
-            std = np.std(neighbors)
-            return np.isnan(center) or abs(center - mean) > self.threshold * std
-
-        # Mask of spike pixels (True where spike is detected)
-        spike_mask = generic_filter(z, is_spike, size=3, mode='mirror')
-
-        # Replace spikes with NaN for region filling
-        z[spike_mask.astype(bool)] = np.nan
-
+    def transform(self, data):
+        norm_data = data/np.nanmedian(data)
+        spike_mask = mask_from_datacondition(norm_data < self.threshold)
+    
         # Use previously defined fill_region to fill spikes
-        filled = LaplaceFillIn(z, ).transform(np.isnan(z))
-        return filled
+        if self.fillin:
+            data = LaplaceFillIn(np.isnan(spike_mask)).transform(data)
+        else:
+            data = spike_mask*data
+
+        return data
 
 
 class ScarRemoval(Transformation):

@@ -9,6 +9,7 @@ from pySNOM.images import (
     SimpleNormalize,
     DataTypes,
     AlignImageStack,
+    RemoveSpikes,
     ScarRemoval,
     mask_from_datacondition,
     dict_from_imagestack,
@@ -211,6 +212,16 @@ class TestSimpleNormalize(unittest.TestCase):
         np.testing.assert_almost_equal(out, [0.0, 1.0, 2.0])
         out = l.transform(d, mask=mask)
         np.testing.assert_almost_equal(out, [-1.0, 0.0, 1.0])
+
+class TestRemoveSpikes(unittest.TestCase):
+    def test_remove(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 0.8
+
+        l = RemoveSpikes(threshold=0.9,fillin=True)
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.0)
 
 
 class TestAlignImageStack(unittest.TestCase):

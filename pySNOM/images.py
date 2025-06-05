@@ -373,19 +373,27 @@ class MaskedBackgroundPolyFit(BackgroundPolyFit,MaskedTransformation):
         return MaskedTransformation.transform(self, data, mask=mask)
 
 class ScarRemoval(Transformation):
-        def __init__(self, threshold=0.5, datatype=DataTypes.Phase):
+        def __init__(self, threshold=0.5, flip=False, datatype=DataTypes.Phase):
             self.threshold = threshold
+            self.flip = flip
             self.datatype = datatype
-        
+
         def transform(self, data):
             d = copy.deepcopy(data)
-            for i in range(1, data.shape[0] - 1):
-                b = data[i - 1, :]
-                c = data[i, :]
-                a = data[i + 1, :]
+            in_data = copy.deepcopy(data)
+            if self.flip:
+                d = d.T
+                in_data = in_data.T
+
+            for i in range(1, in_data.shape[0] - 1):
+                b = in_data[i - 1, :]
+                c = in_data[i, :]
+                a = in_data[i + 1, :]
                 scarmask = np.abs(b - a) < self.threshold * (np.abs(c - a))
                 d[i, scarmask] = (b[scarmask] + a[scarmask])/2
-
+                
+            if self.flip:
+                d = d.T
             return d
 
 # TODO: Helper functions to create masks or turn other types of masks into 1/Nan mask

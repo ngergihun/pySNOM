@@ -223,6 +223,15 @@ class TestRemoveSpikes(unittest.TestCase):
         out = l.transform(d)
         np.testing.assert_almost_equal(out[4,4],1.0)
 
+    def test_remove_higher(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 1.2
+
+        l = RemoveSpikes(threshold=1.1,higher=True,fillin=True)
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.0)
+
 
 class TestAlignImageStack(unittest.TestCase):
     def test_stackalignment(self):

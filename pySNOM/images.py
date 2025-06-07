@@ -450,13 +450,17 @@ class LaplaceFillIn(Transformation):
         return filled
 
 class RemoveSpikes(Transformation):
-    def __init__(self, threshold = 0.8, fillin = True):
+    def __init__(self, threshold = 0.8, higher=False, fillin = True):
         self.threshold = threshold
         self.fillin = fillin
-
+        self.higher = higher
+        
     def transform(self, data):
         norm_data = data/np.nanmedian(data)
-        spike_mask = mask_from_datacondition(norm_data < self.threshold)
+        if self.higher:
+            spike_mask = mask_from_datacondition(norm_data > self.threshold)
+        else:
+            spike_mask = mask_from_datacondition(norm_data < self.threshold)
     
         # Use previously defined fill_region to fill spikes
         if self.fillin:

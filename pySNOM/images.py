@@ -448,25 +448,46 @@ class LaplaceFillIn(Transformation):
         filled = x.reshape(data.shape)
 
         return filled
+    
+class ValueFillIn(Transformation):
+    def __init__(self, mask, value):
+        self.value = value
+        self.mask = mask
+
+    def transform(self, data):
+        data[np.isnan(self.mask)] = self.value
+        
+        return data
 
 class RemoveSpikes(Transformation):
-    def __init__(self, threshold = 0.8, higher=False, fillin = True):
+    def __init__(self, threshold=0.8, absolute_threshold=False, method='laplace', higher=False, value = 1.0):
         self.threshold = threshold
-        self.fillin = fillin
+        self.method = method
         self.higher = higher
+        self.value = value
+        self.absolute_threshold = absolute_threshold
         
     def transform(self, data):
-        norm_data = data/np.nanmedian(data)
+        if not self.absolute_threshold:
+            norm_data = data/np.nanmedian(data)
+        else:
+            norm_data = data
+
         if self.higher:
             spike_mask = mask_from_datacondition(norm_data > self.threshold)
         else:
             spike_mask = mask_from_datacondition(norm_data < self.threshold)
     
         # Use previously defined fill_region to fill spikes
-        if self.fillin:
-            data = LaplaceFillIn(np.isnan(spike_mask)).transform(data)
-        else:
-            data = spike_mask*data
+        match self.method:
+            case "laplace":
+                data = LaplaceFillIn(np.isnan(spike_mask)).transform(data)
+            case "median":
+                data = ValueFillIn(spike_mask,np.nanmedian(data)).transform(data)
+            case "manual":
+                data = ValueFillIn(spike_mask,self.value).transform(data)
+            case _:
+                data = spike_mask*data
 
         return data
 

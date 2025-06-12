@@ -80,8 +80,8 @@ class ProcessInterferogram(Transformation):
         Fs = 1 / np.mean(stepsizes)
         faxis = (Fs / 2) * np.linspace(-1, 1, len(complex_spectrum)) * 10000 / 2
         return (
-            complex_spectrum[int(len(faxis) / 2) : -1],
-            faxis[int(len(faxis) / 2) : -1],
+            complex_spectrum[int(len(faxis) / 2):],
+            faxis[int(len(faxis) / 2):],
         )
 
 

@@ -62,7 +62,7 @@ class TestLineLevel(unittest.TestCase):
         l = LineLevel(method="difference", datatype=DataTypes.Amplitude)
         out = l.transform(d)
         np.testing.assert_almost_equal(
-            out, [[0.0, 1.0, 3.0], [0.8, 1., 1.4], [0.88888889, 1., 1.22222222]]
+            out, [[0.0, 1.0, 3.0], [0.8, 1.0, 1.4], [0.88888889, 1.0, 1.22222222]]
         )
 
     def test_masking_mean(self):
@@ -156,8 +156,8 @@ class TestBackgroundPolyFit(unittest.TestCase):
 
 class TestScarRemoval(unittest.TestCase):
     def test_scarremove(self):
-        data = np.tile(np.linspace(0,0.5,6),(5,1)).T
-        data[3,1:-1] = 0.9
+        data = np.tile(np.linspace(0, 0.5, 6), (5, 1)).T
+        data[3, 1:-1] = 0.9
         t = ScarRemoval(threshold=0.5)
         out = t.transform(data)
 

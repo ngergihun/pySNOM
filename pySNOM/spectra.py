@@ -212,6 +212,7 @@ class NormalizeSpectrum(Transformation):
 
 # TOOLS ------------------------------------------------------------------------------------------------------------------
 class Tools:
+    @staticmethod
     def reshape_spectrum_data(data, params):
         # To compensate for the zero-filling that NeaSpec does
         n = 1

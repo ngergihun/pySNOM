@@ -177,7 +177,9 @@ class ImageStackReader(Reader):
     def read(self, pattern):
         imagestack = []
         wns = []
-        filepaths = get_filenames(self.folder, pattern, folderpattern=self.folder_pattern)
+        filepaths = get_filenames(
+            self.folder, pattern, folderpattern=self.folder_pattern
+        )
 
         for i, path in enumerate(filepaths):
             data_reader = GsfReader(path)
@@ -230,13 +232,15 @@ def get_wl_from_filename(filename):
     return wn
 
 
-def get_filenames(folder: str, pattern: str, folderpattern = ""):
+def get_filenames(folder: str, pattern: str, folderpattern=""):
     """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""
 
     filepaths = []
 
     for subfolder in os.listdir(folder):
-        if os.path.isdir(os.path.join(folder, subfolder)) and re.search(folderpattern, subfolder):
+        if os.path.isdir(os.path.join(folder, subfolder)) and re.search(
+            folderpattern, subfolder
+        ):
             for name in os.listdir(os.path.join(folder, subfolder)):
                 if re.search(pattern, name):
                     subpath = os.path.join(subfolder, name)

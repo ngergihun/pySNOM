@@ -517,6 +517,7 @@ def dict_from_imagestack(X, channelname, wn=None, is_interferogram=True):
 
     final_dict["Row"] = np.repeat(y_loc, X.shape[0])
     final_dict["Column"] = np.repeat(x_loc, X.shape[0])
+    final_dict["Run"] = np.zeros(np.shape(final_dict[channelname]))
 
     if is_interferogram:
         depth_channel_name = "M"

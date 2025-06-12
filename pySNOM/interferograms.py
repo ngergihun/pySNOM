@@ -46,6 +46,33 @@ class NeaInterferogram(NeaSpectrum):
             )
         else:
             raise ValueError
+        
+    def add_run(self, ifg):
+        """Adds a second interferogram to the data as a new run."""
+        if isinstance(ifg, NeaInterferogram):
+            if len(self._data) == 0:
+                self._data = copy.deepcopy(ifg.data)
+                self._parameters = copy.deepcopy(ifg.parameters)
+                self._parameters["Averaging"] = 1
+            else:
+                if ifg.parameters["PixelArea"] != self._parameters["PixelArea"]:
+                    raise ValueError(
+                        "PixelArea of the interferogram to add does not match the current interferogram!"
+                    )
+                for channel in list(ifg.data.keys()):
+                    if channel in list(self._data.keys()):
+                        if channel == "Run":
+                            print(np.shape(ifg.data[channel]))
+                            # self._data[channel] = np.concatenate(
+                            #     (self._data[channel].max() + 1) * np.ones(np.shape(ifg.data[channel])), axis=2
+                            # )
+                        else:
+                            self._data[channel] = np.concatenate(
+                                (self._data[channel], ifg.data[channel]), axis=2
+                            )
+                self._parameters["Averaging"] += 1
+        else:
+            raise TypeError("ifg must be an instance of NeaInterferogram")
 
 
 # TRANSFORMATIONS ------------------------------------------------------------------------------------------------------------------

@@ -9,6 +9,7 @@ from pySNOM.images import (
     SimpleNormalize,
     DataTypes,
     AlignImageStack,
+    ScarRemoval,
     mask_from_datacondition,
     dict_from_imagestack,
 )
@@ -56,12 +57,12 @@ class TestLineLevel(unittest.TestCase):
         l = LineLevel(method="difference", datatype=DataTypes.Phase)
         out = l.transform(d)
         np.testing.assert_almost_equal(
-            out, [[-4.0, -3.0, -1.0], [0.0, 1.0, 3.0], [8.0, 9.0, 11.0]]
+            out, [[0.0, 1.0, 3.0], [0.0, 1.0, 3.0], [0.0, 1.0, 3.0]]
         )
         l = LineLevel(method="difference", datatype=DataTypes.Amplitude)
         out = l.transform(d)
         np.testing.assert_almost_equal(
-            out, [[0.0, 0.2, 0.6], [2.2222222, 2.7777778, 3.8888889], [8.0, 9.0, 11.0]]
+            out, [[0.0, 1.0, 3.0], [0.8, 1.0, 1.4], [0.88888889, 1.0, 1.22222222]]
         )
 
     def test_masking_mean(self):
@@ -98,9 +99,9 @@ class TestLineLevel(unittest.TestCase):
 
         l = LineLevel(method="difference", datatype=DataTypes.Phase)
         out = l.transform(d)
-        np.testing.assert_almost_equal(out[5, 0], 1.0)
-        np.testing.assert_almost_equal(out[1, 0], -1.0)
-        np.testing.assert_almost_equal(out[5, 2], 2.0)
+        np.testing.assert_almost_equal(out[5, 0], -1.0)
+        np.testing.assert_almost_equal(out[1, 0], 0.0)
+        np.testing.assert_almost_equal(out[5, 2], 0.0)
 
 
 class TestBackgroundPolyFit(unittest.TestCase):
@@ -151,6 +152,18 @@ class TestBackgroundPolyFit(unittest.TestCase):
         out, _ = t.transform(d)
         np.testing.assert_almost_equal(out[0, 0], 0.7707006369426758)
         np.testing.assert_almost_equal(out[9, 9], 0.22525876833718098)
+
+
+class TestScarRemoval(unittest.TestCase):
+    def test_scarremove(self):
+        data = np.tile(np.linspace(0, 0.5, 6), (5, 1)).T
+        data[3, 1:-1] = 0.9
+        t = ScarRemoval(threshold=0.5)
+        out = t.transform(data)
+
+        np.testing.assert_almost_equal(out[3, 2], 0.30000000000000004)
+        np.testing.assert_almost_equal(data[3, 2], 0.9)
+
 
 class TestHelperFunction(unittest.TestCase):
     def test_mask_from_condition(self):

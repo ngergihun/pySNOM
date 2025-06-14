@@ -229,14 +229,15 @@ class LineLevel(MaskedTransformation):
             norm = np.nanmean(data, axis=1, keepdims=True)
         elif self.method == "difference":
             if self.datatype == DataTypes.Amplitude:
-                norm = np.nanmedian(data[1:] / data[:-1], axis=1, keepdims=True)
-                norm = np.append(norm, 1)
+                diff = data[1:] / data[:-1]
+                diff = np.insert(diff, 0, 1, axis=0)
+                norm = np.nancumprod(np.nanmedian(diff, axis=1))
             else:
-                norm = np.nanmedian(data[1:] - data[:-1], axis=1, keepdims=True)
-                norm = np.append(
-                    norm, 0
-                )  # difference does not make sense for the last row
-            norm = np.reshape(norm, (norm.size, 1))
+                diff = data[1:] - data[:-1]
+                diff = np.insert(diff, 0, 0, axis=0)
+                norm = np.nancumsum(np.nanmedian(diff, axis=1))
+            norm = np.tile(norm, (data.shape[1], 1)).T
+
         else:
             if self.datatype == DataTypes.Amplitude:
                 norm = 1
@@ -344,7 +345,7 @@ class BackgroundPolyFit(Transformation):
             print("X and Y order must be integer!")
 
         return background
-    
+
     def transform(self, data):
         """Calculates and applies the corrections to the data taking into account the mask if given"""
         background = self.calculate(data)
@@ -353,9 +354,9 @@ class BackgroundPolyFit(Transformation):
             return data / background, background
         else:
             return data - background, background
-        
 
-class MaskedBackgroundPolyFit(BackgroundPolyFit,MaskedTransformation):
+
+class MaskedBackgroundPolyFit(BackgroundPolyFit, MaskedTransformation):
     def __init__(self, xorder=1, yorder=1, datatype=DataTypes.Phase):
         self.xorder = int(xorder)
         self.yorder = int(yorder)
@@ -366,10 +367,35 @@ class MaskedBackgroundPolyFit(BackgroundPolyFit,MaskedTransformation):
         if mask is not None:
             data = mask * data
 
-        return BackgroundPolyFit.calculate(self,data)
-    
+        return BackgroundPolyFit.calculate(self, data)
+
     def transform(self, data, mask=None):
         return MaskedTransformation.transform(self, data, mask=mask)
+
+
+class ScarRemoval(Transformation):
+    def __init__(self, threshold=0.5, flip=False, datatype=DataTypes.Phase):
+        self.threshold = threshold
+        self.flip = flip
+        self.datatype = datatype
+
+    def transform(self, data):
+        d = copy.deepcopy(data)
+        in_data = copy.deepcopy(data)
+        if self.flip:
+            d = d.T
+            in_data = in_data.T
+
+        for i in range(1, in_data.shape[0] - 1):
+            b = in_data[i - 1, :]
+            c = in_data[i, :]
+            a = in_data[i + 1, :]
+            scarmask = np.abs(b - a) < self.threshold * (np.abs(c - a))
+            d[i, scarmask] = (b[scarmask] + a[scarmask]) / 2
+
+        if self.flip:
+            d = d.T
+        return d
 
 
 # TODO: Helper functions to create masks or turn other types of masks into 1/Nan mask

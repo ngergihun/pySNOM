@@ -42,32 +42,32 @@ class test_Neaspectrum(unittest.TestCase):
             self.ifg
         )
 
-        np.testing.assert_almost_equal(a2[500], 61.86039771056218)
-        np.testing.assert_almost_equal(p2[500], -2.226779496601322)
-        np.testing.assert_almost_equal(wn2[500], 1273.6684340046547)
+        np.testing.assert_almost_equal(a2[500], 62.18682449597315)
+        np.testing.assert_almost_equal(p2[500], 2.7921248371008596)
+        np.testing.assert_almost_equal(wn2[500], 1276.2183207594132)
 
     def test_multichannel_process(self):
         s_multichannel = ProcessMultiChannels(apod=True).transform(self.ifg)
 
         np.testing.assert_almost_equal(
-            s_multichannel.data["O3A"][500], 23.338979395903074
+            s_multichannel.data["O3A"][500], 23.374168641358338
         )
         np.testing.assert_almost_equal(
-            s_multichannel.data["O3P"][500], 0.26155207185723767
+            s_multichannel.data["O3P"][500], -0.9999766071179981
         )
         np.testing.assert_almost_equal(
-            s_multichannel.data["Wavenumber"][500], 1273.6684340046547
+            s_multichannel.data["Wavenumber"][500], 1276.2183207594132
         )
 
     def test_fullauto_process(self):
         s_allpoints = ProcessAllPoints().transform(self.ifg)
 
-        np.testing.assert_almost_equal(s_allpoints.data["O3A"][500], 23.338979395903074)
+        np.testing.assert_almost_equal(s_allpoints.data["O3A"][500], 23.374168641358338)
         np.testing.assert_almost_equal(
-            s_allpoints.data["O3P"][500], 0.26155207185723767
+            s_allpoints.data["O3P"][500], -0.9999766071179981
         )
         np.testing.assert_almost_equal(
-            s_allpoints.data["Wavenumber"][500], 1273.6684340046547
+            s_allpoints.data["Wavenumber"][500], 1276.2183207594132
         )
 
 

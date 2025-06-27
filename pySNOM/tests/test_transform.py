@@ -9,6 +9,8 @@ from pySNOM.images import (
     SimpleNormalize,
     DataTypes,
     AlignImageStack,
+    RemoveSpikes,
+    ValueFillIn,
     ScarRemoval,
     mask_from_datacondition,
     dict_from_imagestack,
@@ -211,6 +213,63 @@ class TestSimpleNormalize(unittest.TestCase):
         np.testing.assert_almost_equal(out, [0.0, 1.0, 2.0])
         out = l.transform(d, mask=mask)
         np.testing.assert_almost_equal(out, [-1.0, 0.0, 1.0])
+
+class TestFillIn(unittest.TestCase):
+    def test_value_fillin(self):
+        d = np.ones([9, 9])
+        mask = np.random.rand(9,9)
+        mask[4,4] = np.nan
+
+        l = ValueFillIn(mask=mask,value=np.inf)
+
+        out = l.transform(d)
+        np.testing.assert_equal(out[4,4],np.inf)
+        
+class TestRemoveSpikes(unittest.TestCase):
+    def test_remove_laplace(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 0.8
+
+        l = RemoveSpikes(threshold=0.9,method='laplace')
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.0)
+
+    def test_remove_higher_laplace(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 1.2
+
+        l = RemoveSpikes(threshold=1.1,method='laplace',higher=True)
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.0)
+
+    def test_remove_manual(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 0.8
+
+        l = RemoveSpikes(threshold=0.9,method='manual',value=1.11111)
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.11111)
+
+    def test_remove_median(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 0.8
+
+        l = RemoveSpikes(threshold=0.9,method='median')
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],1.0)
+
+    def test_remove_nan(self):
+        d = np.ones([9, 9])
+        d[4, 4] = 0.8
+
+        l = RemoveSpikes(threshold=0.9,method='asdfsdfhdfg')
+
+        out = l.transform(d)
+        np.testing.assert_almost_equal(out[4,4],np.nan)
 
 
 class TestAlignImageStack(unittest.TestCase):

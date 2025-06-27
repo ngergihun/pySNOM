@@ -3,7 +3,9 @@ from enum import Enum
 from pySNOM.images import type_from_channelname
 from pySNOM.defaults import Defaults
 
-MeasurementModes = Enum("MeasurementModes", ["None", "nanoFTIR", "PsHet", "PTE", "nanoRaman"])
+MeasurementModes = Enum(
+    "MeasurementModes", ["None", "nanoFTIR", "PsHet", "PTE", "nanoRaman"]
+)
 DataTypes = Enum("DataTypes", ["Amplitude", "Phase", "Complex", "Topography"])
 ChannelTypes = Enum("ChannelTypes", ["None", "Optical", "Mechanical"])
 ScanTypes = Enum("ScanTypes", ["Point", "LineScan", "HyperScan"])

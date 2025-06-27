@@ -60,7 +60,9 @@ class TestReaders(unittest.TestCase):
         data, params = file_reader.read()
 
         np.testing.assert_almost_equal(data["Data"][0], 11.0)
-        np.testing.assert_string_equal(params["Scan"], "AFM-Raman/PL Scan (Tapping Mode)")
+        np.testing.assert_string_equal(
+            params["Scan"], "AFM-Raman/PL Scan (Tapping Mode)"
+        )
 
     def test_legacy_nea_reader(self):
         f = "datasets/neafile_test_ifg.nea"

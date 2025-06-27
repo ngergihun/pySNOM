@@ -27,7 +27,7 @@ class test_Neaspectrum(unittest.TestCase):
 
         s = spectra.NeaSpectrum(data, params)
 
-        np.testing.assert_almost_equal(s.data["O2A"][1,0,0], 0.1600194)
+        np.testing.assert_almost_equal(s.data["O2A"][1, 0, 0], 0.1600194)
         np.testing.assert_string_equal(s.parameters["Scan"], "Fourier Scan")
         np.testing.assert_string_equal(s.scantype, "LineScan")
         np.testing.assert_equal(np.shape(s.data["O2A"])[2], 4)

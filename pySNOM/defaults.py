@@ -17,7 +17,7 @@ class Defaults:
         self.spectral_mode_defs = {
             "Fourier Scan": "nanoFTIR",
             "Pointspectroscopy PTE+": "PTE",
-            "AFM-Raman/PL Scan (Tapping Mode)": "nanoRaman"
+            "AFM-Raman/PL Scan (Tapping Mode)": "nanoRaman",
         }
 
 

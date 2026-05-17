@@ -217,10 +217,13 @@ class NormalizeSpectrum(Transformation):
 
     def transform(self, spectrum, refspectrum):
         if self.datatype == DataTypes.Phase or self.datatype == DataTypes.Topography:
+            newspectrum = np.angle(
+                np.exp(spectrum * complex(1j)) / np.exp(refspectrum * complex(1j))
+            )
             if self.dounwrap:
-                return np.unwrap(spectrum - refspectrum)
+                return np.unwrap(newspectrum)
             else:
-                return spectrum - refspectrum
+                return newspectrum
         else:
             return spectrum / refspectrum
 

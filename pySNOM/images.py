@@ -569,7 +569,9 @@ class CalculateXCorrDrift(Transformation):
         self.kwargs = kwargs
 
     def transform(self, image):
-        shift, _, _ = phase_cross_correlation(self.image_ref, image, upsample_factor=self.upsample_factor, **self.kwargs)
+        shift, _, _ = phase_cross_correlation(
+            self.image_ref, image, upsample_factor=self.upsample_factor, **self.kwargs
+        )
         return shift
 
 
@@ -583,6 +585,7 @@ class CorrectImageDrift(Transformation):
         offset_phase = fourier_shift(np.fft.fftn(image), self.shift)
         offset_phase = np.fft.ifftn(offset_phase)
         return offset_phase.real
+
 
 class AlignImageStack(Transformation):
     """Align a stack of images by estimating and correcting relative drift.
@@ -638,16 +641,18 @@ class AlignImageStack(Transformation):
             where each tuple represents the drift relative to the reference
             image. Returns ``None`` if fewer than two images are provided.
         """
-        
+
         shifts = []
         if len(images) > 1:
-            xcorr = CalculateXCorrDrift(images[self.ref_index], upsample_factor=self.upsample_factor)
+            xcorr = CalculateXCorrDrift(
+                images[self.ref_index], upsample_factor=self.upsample_factor
+            )
             for i in range(len(images)):
                 if i != self.ref_index:
                     shifts.append(xcorr.transform(images[i]))
                 else:
                     shifts.append((0, 0))
-                    
+
             return shifts
         else:
             return None
@@ -681,9 +686,11 @@ class AlignImageStack(Transformation):
         """
 
         # aligned_stack = []
-        aligned_stack = np.zeros((len(images),) + images[0].shape, dtype=images[0].dtype)
+        aligned_stack = np.zeros(
+            (len(images),) + images[0].shape, dtype=images[0].dtype
+        )
         for k in range(len(images)):
-            aligned_stack[k] = shift_fill(images[k], shifts[k],fill=0)
+            aligned_stack[k] = shift_fill(images[k], shifts[k], fill=0)
 
         # for i in range(len(images)):
         #     shifter = CorrectImageDrift(shifts[i])
@@ -693,37 +700,38 @@ class AlignImageStack(Transformation):
 
         return aligned_stack
 
+
 def cut_cross_section(image_stack, shifts):
     """
     Crop a stack of shifted images to their common overlapping cross-section.
 
-    This function takes an image stack (e.g., a list or array of 2D images) and 
-    a corresponding list of shift vectors applied to each image. It computes 
-    the minimal rectangular region (cross-section) that is common to all shifted 
+    This function takes an image stack (e.g., a list or array of 2D images) and
+    a corresponding list of shift vectors applied to each image. It computes
+    the minimal rectangular region (cross-section) that is common to all shifted
     images and returns the cropped stack.
 
     Parameters
     ----------
     image_stack : array_like
-        A sequence or NumPy array of shape (N, H, W), where N is the number 
+        A sequence or NumPy array of shape (N, H, W), where N is the number
         of images, and H and W are the image height and width, respectively.
     shifts : array_like
-        A sequence of (x, y) shift vectors of shape (N, 2), specifying 
+        A sequence of (x, y) shift vectors of shape (N, 2), specifying
         the pixel displacements applied to each corresponding image.
 
     Returns
     -------
     numpy.ndarray
-        A NumPy array of the cropped image stack containing only the 
-        overlapping region across all shifted images. The shape of the 
-        returned array is (N, H', W'), where H' and W' correspond to 
+        A NumPy array of the cropped image stack containing only the
+        overlapping region across all shifted images. The shape of the
+        returned array is (N, H', W'), where H' and W' correspond to
         the dimensions of the common cross-section.
 
     Notes
     -----
-    - This assumes that the shifts are given in pixel units for the x 
+    - This assumes that the shifts are given in pixel units for the x
       (horizontal) and y (vertical) directions.
-    - The function ensures that all images are trimmed to the same region 
+    - The function ensures that all images are trimmed to the same region
       to maintain alignment across the stack.
     """
 
@@ -736,11 +744,11 @@ def cut_cross_section(image_stack, shifts):
     # Cut the images to the common cross-section
     shape = np.array(image_stack).shape
     print(shape)
-    slicex = slice(max(xmax, 0), min(shape[2], shape[2]+xmin))
-    slicey = slice(max(ymax, 0), min(shape[1], shape[1]+ymin))
-    print(slicey,slicex)
+    slicex = slice(max(xmax, 0), min(shape[2], shape[2] + xmin))
+    slicey = slice(max(ymax, 0), min(shape[1], shape[1] + ymin))
+    print(slicey, slicex)
 
-    return np.array(image_stack)[:,slicey, slicex]
+    return np.array(image_stack)[:, slicey, slicex]
 
 
 ###############################################################################################
@@ -760,17 +768,17 @@ class RegisterTranslation:
 
 def shift_fill(img, sh, fill=np.nan):
     """Shift and fill invalid positions"""
-    aligned = shift(img, sh, mode='nearest')
+    aligned = shift(img, sh, mode="nearest")
 
     (u, v) = img.shape
 
     shifty = int(round(sh[0]))
-    aligned[:max(0, shifty), :] = fill
-    aligned[min(u, u+shifty):, :] = fill
+    aligned[: max(0, shifty), :] = fill
+    aligned[min(u, u + shifty) :, :] = fill
 
     shiftx = int(round(sh[1]))
-    aligned[:, :max(0, shiftx)] = fill
-    aligned[:, min(v, v+shiftx):] = fill
+    aligned[:, : max(0, shiftx)] = fill
+    aligned[:, min(v, v + shiftx) :] = fill
 
     return aligned
 
@@ -806,7 +814,9 @@ def alignstack_with_shifts(raw, shifts):
 
     return aligned
 
+
 ################################################################################################
+
 
 def sort_image_stack(images, wns):
     """Sort the image stack based on the wavenumber list"""

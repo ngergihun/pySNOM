@@ -685,16 +685,11 @@ class AlignImageStack(Transformation):
             overlapping region.
         """
 
-        # aligned_stack = []
         aligned_stack = np.zeros(
             (len(images),) + images[0].shape, dtype=images[0].dtype
         )
         for k in range(len(images)):
             aligned_stack[k] = shift_fill(images[k], shifts[k], fill=0)
-
-        # for i in range(len(images)):
-        #     shifter = CorrectImageDrift(shifts[i])
-        #     aligned_stack.append(shifter.transform(images[i]))
 
         aligned_stack = cut_cross_section(aligned_stack, shifts)
 
@@ -751,21 +746,6 @@ def cut_cross_section(image_stack, shifts):
     return np.array(image_stack)[:, slicey, slicex]
 
 
-###############################################################################################
-class RegisterTranslation:
-    def __init__(self, upsample_factor=1):
-        self.upsample_factor = upsample_factor
-
-    def __call__(self, base, shifted):
-        """Return the shift (in each axis) needed to align to the base.
-        Shift down and right are positive. First coordinate belongs to
-        the first axis (rows in numpy)."""
-        s, _, _ = phase_cross_correlation(
-            base, shifted, upsample_factor=self.upsample_factor
-        )
-        return s
-
-
 def shift_fill(img, sh, fill=np.nan):
     """Shift and fill invalid positions"""
     aligned = shift(img, sh, mode="nearest")
@@ -779,38 +759,6 @@ def shift_fill(img, sh, fill=np.nan):
     shiftx = int(round(sh[1]))
     aligned[:, : max(0, shiftx)] = fill
     aligned[:, min(v, v + shiftx) :] = fill
-
-    return aligned
-
-
-def alignstack(raw, shiftfn, ref_frame_num=0):
-    """Align to the first image"""
-    shifts = calculate_stack_shifts(raw, shiftfn, ref_frame_num=ref_frame_num)
-    aligned = alignstack_with_shifts(raw, shifts)
-
-    return shifts, aligned
-
-
-def calculate_stack_shifts(raw, shiftfn, ref_frame_num=0):
-    """Calculate the shifts for each image in the stack"""
-    base = raw[ref_frame_num]
-    shifts = []
-
-    for i, image in enumerate(raw):
-        if i != ref_frame_num:
-            shifts.append(shiftfn(base, image))
-        else:
-            shifts.append((0, 0))
-    shifts = np.array(shifts)
-
-    return shifts
-
-
-def alignstack_with_shifts(raw, shifts):
-    """Aligns the stack using the provided shifts"""
-    aligned = np.zeros((len(raw),) + raw[0].shape, dtype=raw[0].dtype)
-    for k in range(len(raw)):
-        aligned[k] = shift_fill(raw[k], shifts[k])
 
     return aligned
 
@@ -882,42 +830,3 @@ def flatten_stack(imagestack):
         (imagestack.shape[0], imagestack.shape[1] * imagestack.shape[2])
     )
     return np.ravel(flattened_values, order="F")
-
-
-def shifted_cross_section(rect1: list, rect2: list):
-    """Calculates the cross-section of two rectangle shifted to each other"""
-    x1 = rect1[1]
-    x2 = rect2[1]
-    y1 = rect1[0]
-    y2 = rect2[0]
-    W1 = rect1[3]
-    W2 = rect2[3]
-    H1 = rect1[2]
-    H2 = rect2[2]
-
-    if y2 > y1:
-        Hn = H1 - (y2 - y1)
-        yn = y2
-    elif (y2 < y1) and (y1 + H1 > y2 + H2):  # Negative shift and higher than H2
-        Hn = H2 + (y2 - y1)
-        yn = y1
-    else:
-        Hn = H1
-        yn = y1
-
-    if x2 > x1:  # Positive shift
-        Wn = W1 - (x2 - x1)
-        xn = x2
-    elif (x2 < x1) and (x1 + W1 > x2 + W2):  # Negative shift and higher than W2
-        Wn = W2 + (x2 - x1)
-        xn = x1
-    else:
-        Wn = W1
-        xn = x1
-
-    return int(yn), int(xn), int(Hn), int(Wn)
-
-
-def cut_image(image, rect):
-    """Cuts the part of the image array defined by rectangle"""
-    return image[-(rect[2]) : -(rect[0] + 1), rect[1] : rect[1] + rect[3]]

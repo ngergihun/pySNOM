@@ -174,12 +174,14 @@ class ConstantNormalize(Transformation):
     def transform(self, spectrum, wnaxis):
         if self.from_spectrum:
             data_idx = np.argmin(np.abs(wnaxis-self.value))
-            self.value = spectrum[data_idx]
+            data_value = spectrum[data_idx]
+        else:
+            data_value = self.value
 
         if self.datatype == DataTypes.Amplitude:
-            return spectrum / self.value
+            return spectrum / data_value
         else:
-            return spectrum - self.value
+            return spectrum - data_value
 
 class RotatePhase(Transformation):
     def __init__(self, degree=0.0, wn_ref=1000.0, constant_shift=False):

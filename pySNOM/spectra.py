@@ -165,17 +165,36 @@ class LinearNormalize(Transformation):
         else:
             return spectrum - (m * wnaxis + C)
 
+class ConstantNormalize(Transformation):
+    def __init__(self, value=1.0, from_spectrum=False, datatype=DataTypes.Phase):
+        self.value = value
+        self.from_spectrum = from_spectrum
+        self.datatype = datatype
+
+    def transform(self, spectrum, wnaxis):
+        if self.from_spectrum:
+            data_idx = np.argmin(np.abs(wnaxis-self.value))
+            self.value = spectrum[data_idx]
+
+        if self.datatype == DataTypes.Amplitude:
+            return spectrum / self.value
+        else:
+            return spectrum - self.value
 
 class RotatePhase(Transformation):
-    def __init__(self, degree=0.0, wn_ref=1000.0):
+    def __init__(self, degree=0.0, wn_ref=1000.0, constant_shift=False):
         self.wn_ref = wn_ref
         self.degree = degree
+        self.constant_shift = constant_shift
 
     def transform(self, spectrum, wnaxis):
         if not np.iscomplex(spectrum).any():
             spectrum = np.exp(spectrum * complex(1j))
 
-        angles = wnaxis * np.deg2rad(self.degree) / self.wn_ref
+        if not self.constant_shift:
+            angles = wnaxis * np.deg2rad(self.degree) / self.wn_ref
+        else:
+            angles = np.deg2rad(self.degree)
 
         return np.angle(spectrum * np.exp(angles * complex(1j)))
 

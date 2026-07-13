@@ -147,6 +147,29 @@ class Transformation:
     def transform(self, data):
         raise NotImplementedError()
 
+class Cut(Transformation):
+    def __init__(self, wavenumber1=0.0, wavenumber2=1000.0):
+        self.wn1 = wavenumber1
+        self.wn2 = wavenumber2
+
+    def transform(self, spectrum, wnaxis):
+        wn1idx = np.argmin(abs(wnaxis - self.wn1))
+        wn2idx = np.argmin(abs(wnaxis - self.wn2))
+        return spectrum[wn1idx:wn2idx], wnaxis[wn1idx:wn2idx]
+    
+class Scale(Transformation):
+    def __init__(self, factor=1.0, datatype=DataTypes.Phase):
+        self.factor = factor
+        self.datatype = datatype
+
+    def transform(self, spectrum):
+        if self.datatype == DataTypes.Phase:
+            if not np.iscomplex(spectrum).any():
+                spectrum = np.exp(spectrum * self.factor * complex(1j))
+            return np.angle(spectrum)
+        else:
+            return spectrum * self.factor
+
 
 class LinearNormalize(Transformation):
     def __init__(self, wavenumber1=0.0, wavenumber2=1000.0, datatype=DataTypes.Phase):

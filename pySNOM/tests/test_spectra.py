@@ -145,6 +145,38 @@ class test_Neaspectrum(unittest.TestCase):
 
         np.testing.assert_allclose(normalized, np.ones_like(spectrum), atol=1e-12)
 
+    def test_cut_transformation(self):
+        spectrum = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
+        wnaxis = np.array([900.0, 1000.0, 1100.0, 1200.0, 1300.0])
+
+        cut_spectrum, cut_wnaxis = spectra.Cut(
+            wavenumber1=1000.0,
+            wavenumber2=1300.0,
+        ).transform(spectrum, wnaxis)
+
+        np.testing.assert_allclose(cut_spectrum, np.array([20.0, 30.0, 40.0]))
+        np.testing.assert_allclose(cut_wnaxis, np.array([1000.0, 1100.0, 1200.0]))
+
+    def test_scale_transformation_phase(self):
+        spectrum = np.array([0.0, np.pi / 4.0])
+
+        scaled = spectra.Scale(
+            factor=2.0,
+            datatype=spectra.DataTypes.Phase,
+        ).transform(spectrum)
+
+        np.testing.assert_allclose(scaled, np.array([0.0, np.pi / 2.0]), atol=1e-12)
+
+    def test_scale_transformation_amplitude(self):
+        spectrum = np.array([1.0, 2.0, 3.0])
+
+        scaled = spectra.Scale(
+            factor=3.0,
+            datatype=spectra.DataTypes.Amplitude,
+        ).transform(spectrum)
+
+        np.testing.assert_allclose(scaled, np.array([3.0, 6.0, 9.0]), atol=1e-12)
+
 
 if __name__ == "__main__":
     unittest.main()

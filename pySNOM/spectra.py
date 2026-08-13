@@ -147,6 +147,29 @@ class Transformation:
     def transform(self, data):
         raise NotImplementedError()
 
+class Cut(Transformation):
+    def __init__(self, wavenumber1=0.0, wavenumber2=1000.0):
+        self.wn1 = wavenumber1
+        self.wn2 = wavenumber2
+
+    def transform(self, spectrum, wnaxis):
+        wn1idx = np.argmin(abs(wnaxis - self.wn1))
+        wn2idx = np.argmin(abs(wnaxis - self.wn2))
+        return spectrum[wn1idx:wn2idx], wnaxis[wn1idx:wn2idx]
+    
+class Scale(Transformation):
+    def __init__(self, factor=1.0, datatype=DataTypes.Phase):
+        self.factor = factor
+        self.datatype = datatype
+
+    def transform(self, spectrum):
+        if self.datatype == DataTypes.Phase:
+            if not np.iscomplex(spectrum).any():
+                spectrum = np.exp(spectrum * self.factor * complex(1j))
+            return np.angle(spectrum)
+        else:
+            return spectrum * self.factor
+
 
 class LinearNormalize(Transformation):
     def __init__(self, wavenumber1=0.0, wavenumber2=1000.0, datatype=DataTypes.Phase):
@@ -165,17 +188,38 @@ class LinearNormalize(Transformation):
         else:
             return spectrum - (m * wnaxis + C)
 
+class ConstantNormalize(Transformation):
+    def __init__(self, value=1.0, from_spectrum=False, datatype=DataTypes.Phase):
+        self.value = value
+        self.from_spectrum = from_spectrum
+        self.datatype = datatype
+
+    def transform(self, spectrum, wnaxis):
+        if self.from_spectrum:
+            data_idx = np.argmin(np.abs(wnaxis-self.value))
+            data_value = spectrum[data_idx]
+        else:
+            data_value = self.value
+
+        if self.datatype == DataTypes.Amplitude:
+            return spectrum / data_value
+        else:
+            return spectrum - data_value
 
 class RotatePhase(Transformation):
-    def __init__(self, degree=0.0, wn_ref=1000.0):
+    def __init__(self, degree=0.0, wn_ref=1000.0, constant_shift=False):
         self.wn_ref = wn_ref
         self.degree = degree
+        self.constant_shift = constant_shift
 
     def transform(self, spectrum, wnaxis):
         if not np.iscomplex(spectrum).any():
             spectrum = np.exp(spectrum * complex(1j))
 
-        angles = wnaxis * np.deg2rad(self.degree) / self.wn_ref
+        if not self.constant_shift:
+            angles = wnaxis * np.deg2rad(self.degree) / self.wn_ref
+        else:
+            angles = np.deg2rad(self.degree)
 
         return np.angle(spectrum * np.exp(angles * complex(1j)))
 

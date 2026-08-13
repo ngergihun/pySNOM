@@ -1,0 +1,49 @@
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 3rem;
+}
+
+.landing-card {
+  display: block;
+  border: 1px solid var(--pst-color-border);
+  border-radius: 0.35rem;
+  padding: 1.25rem 1.4rem;
+  color: var(--pst-color-text-base);
+  background: var(--pst-color-background);
+  transition: border-color 150ms ease, box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.landing-card:hover {
+  border-color: var(--pst-color-primary);
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 10%);
+  color: var(--pst-color-text-base);
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.landing-card h2 {
+  margin: 0.35rem 0 0.5rem;
+  color: var(--pst-color-primary);
+  font-size: 1.25rem;
+}
+
+.landing-card p {
+  margin: 0;
+}
+
+.landing-card__label {
+  color: var(--pst-color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .landing-grid {
+    grid-template-columns: 1fr;
+  }
+}

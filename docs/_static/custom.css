@@ -5,6 +5,10 @@
   margin: 2rem 0 3rem;
 }
 
+.bd-page-width {
+  max-width: 100rem !important;
+}
+
 .landing-card {
   display: block;
   border: 1px solid var(--pst-color-border);

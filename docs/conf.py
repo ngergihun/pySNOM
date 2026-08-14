@@ -36,7 +36,8 @@ html_theme_options = {
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links", "theme-switcher"],
     "navbar_persistent": ["search-button"],
-    "show_nav_level": 2,
+    "show_nav_level": 0,
+    "collapse_navigation": True,
     "show_toc_level": 2,
     "navigation_depth": 4,
 }

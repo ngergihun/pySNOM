@@ -1,11 +1,31 @@
-""" This file contains a dictionary of definitions to create connection
-between the manufacturer nomeclature and the naming used in the package """
+"""Definitions that map manufacturer names to pySNOM names.
+
+The dictionaries in this module translate values found in Neaspec metadata
+files into the measurement-mode names used by pySNOM.
+"""
 
 
 class Defaults:
-    # Neaspec names are taken from the Scan field of the info txt file
+    """Mappings between Neaspec metadata and pySNOM measurement modes.
+
+    Attributes
+    ----------
+    image_mode_defs : dict of str to str
+        Mapping from image ``Scan`` values to pySNOM image-mode names.
+    spectral_mode_defs : dict of str to str
+        Mapping from spectral ``Scan`` values to pySNOM spectral-mode names.
+    """
+
     def __init__(self) -> None:
-        self.image_mode_defs = {
+        """Create the default manufacturer-to-package mappings.
+
+        Returns
+        -------
+        None
+            This constructor initializes the mapping attributes in place.
+        """
+
+        self.image_mode_defs: dict[str, str] = {
             "AFM": "AFM",
             "2D (PsHet)": "PsHet",
             "Whitelight Imaging": "WLI",
@@ -14,7 +34,7 @@ class Defaults:
             "Contact Mode 2D": "ContactAFM",
         }
 
-        self.spectral_mode_defs = {
+        self.spectral_mode_defs: dict[str, str] = {
             "Fourier Scan": "nanoFTIR",
             "Pointspectroscopy PTE+": "PTE",
             "AFM-Raman/PL Scan (Tapping Mode)": "nanoRaman",

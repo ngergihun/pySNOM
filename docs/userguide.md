@@ -1,4 +1,4 @@
-# NumPy-style docstrings
+# User guide
 
 Sphinx uses the Napoleon extension to render NumPy-style Python docstrings as
 structured documentation. New public classes and methods should follow this

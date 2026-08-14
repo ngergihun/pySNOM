@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.NeaFileLegacyReader
+﻿pySNOM.readers.NeaFileLegacyReader
 ==================================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: NeaFileLegacyReader
 
+    
 
-.. autoclass:: pySNOM.readers.NeaFileLegacyReader
+    .. automethod:: __init__
+    .. automethod:: read
+ 
+
+     

@@ -1,12 +1,13 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.Reader
+﻿pySNOM.readers.Reader
 =====================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: Reader
 
+    
 
-.. autoclass:: pySNOM.readers.Reader
+    .. automethod:: __init__
+ 
+
+     

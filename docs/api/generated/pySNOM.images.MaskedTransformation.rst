@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.images.MaskedTransformation
+﻿pySNOM.images.MaskedTransformation
 ==================================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: MaskedTransformation
 
+    
 
-.. autoclass:: pySNOM.images.MaskedTransformation
+    .. automethod:: __init__
+    .. automethod:: calculate
+    .. automethod:: correct
+    .. automethod:: transform
+ 
+
+     

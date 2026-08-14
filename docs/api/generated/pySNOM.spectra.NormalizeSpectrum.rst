@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.NormalizeSpectrum
+﻿pySNOM.spectra.NormalizeSpectrum
 ================================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: NormalizeSpectrum
 
+    
 
-.. autoclass:: pySNOM.spectra.NormalizeSpectrum
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

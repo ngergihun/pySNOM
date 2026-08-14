@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.Transformation
+﻿pySNOM.spectra.Transformation
 =============================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: Transformation
 
+    
 
-.. autoclass:: pySNOM.spectra.Transformation
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

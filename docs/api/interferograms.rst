@@ -16,7 +16,7 @@ interface for processing and analysis but it is not neccessary to use them direc
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    NeaInterferogram
 
@@ -30,7 +30,7 @@ Simple transformers
 """"""""""""""""""""""""""""""""""""""
 .. autosummary::
 	:toctree: generated
-	:template: class.rst
+	:template: autosummary/class.rst
 
 	ProcessInterferogram
 	InterpolateInterferogram
@@ -39,7 +39,7 @@ Simple transformers
 """"""""""""""""""""""""""""""""""""""
 .. autosummary::
 	:toctree: generated
-	:template: class.rst
+	:template: autosummary/class.rst
 
 	ProcessSingleChannel
 	ProcessMultiChannels
@@ -53,6 +53,6 @@ that can be used for interferogram processing pipelines. They are wrapped in the
 
 .. autosummary::
 	:toctree: generated
-	:template: class.rst
+	:template: autosummary/class.rst
 
 	Tools

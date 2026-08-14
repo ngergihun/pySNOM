@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.ValueFillIn
+﻿pySNOM.images.ValueFillIn
 =========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: ValueFillIn
 
+    
 
-.. autoclass:: pySNOM.images.ValueFillIn
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

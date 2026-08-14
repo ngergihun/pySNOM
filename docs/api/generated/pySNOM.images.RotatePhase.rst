@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.RotatePhase
+﻿pySNOM.images.RotatePhase
 =========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: RotatePhase
 
+    
 
-.. autoclass:: pySNOM.images.RotatePhase
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

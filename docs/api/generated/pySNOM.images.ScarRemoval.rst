@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.ScarRemoval
+﻿pySNOM.images.ScarRemoval
 =========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: ScarRemoval
 
+    
 
-.. autoclass:: pySNOM.images.ScarRemoval
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

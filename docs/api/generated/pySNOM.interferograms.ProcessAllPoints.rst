@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.ProcessAllPoints
+﻿pySNOM.interferograms.ProcessAllPoints
 ======================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: ProcessAllPoints
 
+    
 
-.. autoclass:: pySNOM.interferograms.ProcessAllPoints
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

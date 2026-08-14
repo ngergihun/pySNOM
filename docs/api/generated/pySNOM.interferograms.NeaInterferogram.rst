@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.NeaInterferogram
+﻿pySNOM.interferograms.NeaInterferogram
 ======================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: NeaInterferogram
 
+    
 
-.. autoclass:: pySNOM.interferograms.NeaInterferogram
+    .. automethod:: __init__
+    .. automethod:: add_channel
+ 
+
+    
+
+ 

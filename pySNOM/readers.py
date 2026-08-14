@@ -1,3 +1,11 @@
+"""File readers for SNOM measurement data.
+
+This module provides the :class:`Reader` base class and its subclasses for
+loading images (Gwyddion, GSF, XYZ image stacks), spectra (NeaSpec, XYZ
+file formats), and their associated info/header files, plus a handful of
+filename and info-file helper functions used by the readers.
+"""
+
 import gwyfile
 import gsffile
 import numpy as np
@@ -8,16 +16,53 @@ import re
 
 
 class Reader:
+    """Base class for all pySNOM file readers.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the file to read.
+
+    Attributes
+    ----------
+    filename : str or None
+        Full path (with name) of the file to read.
+    """
+
     def __init__(self, fullfilepath=None):
         self.filename = fullfilepath
 
 
 class GwyReader(Reader):
+    """Reader for Gwyddion (``.gwy``) files.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the ``.gwy`` file to read.
+    channelname : str, optional
+        If given, :meth:`read` returns only this channel instead of all of them.
+
+    Attributes
+    ----------
+    channelname : str or None
+        Name of the single channel to extract, or ``None`` to return all channels.
+    """
+
     def __init__(self, fullfilepath=None, channelname=None):
         super().__init__(fullfilepath)
         self.channelname = channelname
 
     def read(self):
+        """Read the Gwyddion file and return its data field(s).
+
+        Returns
+        -------
+        dict or GwyDataField
+            A dictionary mapping channel names to :class:`gwyfile.objects.GwyDataField`
+            objects when :attr:`channelname` is ``None``; otherwise the single
+            requested :class:`gwyfile.objects.GwyDataField`.
+        """
         # Returns a dictionary of all the channels
         gwyobj = gwyfile.load(self.filename)
         allchannels = gwyfile.util.get_datafields(gwyobj)
@@ -31,10 +76,25 @@ class GwyReader(Reader):
 
 
 class GsfReader(Reader):
+    """Reader for Gwyddion Simple Field (``.gsf``) files.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the ``.gsf`` file to read.
+    """
+
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
     def read(self):
+        """Read the GSF file and wrap it in a :class:`gwyfile.objects.GwyDataField`.
+
+        Returns
+        -------
+        gwyfile.objects.GwyDataField
+            Data field built from the GSF data and its real size/offset metadata.
+        """
         data, metadata = gsffile.read_gsf(self.filename)
         channel = gwyfile.objects.GwyDataField(
             data,
@@ -50,11 +110,40 @@ class GsfReader(Reader):
 
 
 class NeaHeaderReader(Reader):
+    """Reader for the ``#``-commented header block of NeaSpec data files.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the NeaSpec data file whose header is read.
+    """
+
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
     @staticmethod
     def parseline(linestring, params={}):
+        """Parse a single ``#``-commented header line into `params`.
+
+        Recognizes several NeaSpec-specific field names (scanner center
+        position, scan/pixel area, averaging, interferometer center
+        distance, regulator settings, Q-factor) and stores them with
+        appropriately typed values; any other field is parsed as a float
+        when possible, otherwise kept as a stripped string.
+
+        Parameters
+        ----------
+        linestring : str
+            A single tab-separated header line, starting with ``"# "``.
+        params : dict, optional
+            Dictionary of parameters to update in place with the parsed
+            field. Mutated and returned.
+
+        Returns
+        -------
+        dict
+            The `params` dictionary, updated with the newly parsed field.
+        """
         ct = linestring.split("\t")
         fieldname = ct[0][2:-1]
         fieldname = fieldname.replace(" ", "")
@@ -102,6 +191,15 @@ class NeaHeaderReader(Reader):
         return params
 
     def read(self):
+        """Read the header block and the channel name row that follows it.
+
+        Returns
+        -------
+        tuple[list of str, dict]
+            A `(channels, params)` pair: the list of channel names found on
+            the first non-comment line, and the parameter dictionary parsed
+            from the preceding ``#``-commented header lines.
+        """
         params = {}
         with open(self.filename, encoding="utf8") as f:
             # Read www.neaspec.com
@@ -125,20 +223,65 @@ class NeaHeaderReader(Reader):
 
 
 class NeaInfoReader(NeaHeaderReader):
+    """Reader that extracts only the parameter dictionary from a NeaSpec info file.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the NeaSpec info file to read.
+    """
+
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
     def read(self):
+        """Read the info file and return its parameter dictionary.
+
+        Returns
+        -------
+        dict
+            Measurement parameters parsed from the info file's header.
+        """
         _, infodict = super().read()
         return infodict
 
 
 class NeaSpectralReader(Reader):
+    """Reader for NeaSpec spectral data files (tab-separated, with a header block).
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the spectral data file to read.
+    output : {"dict", "dataframe"}, optional
+        Output format for the channel data returned by :meth:`read`. Any
+        value other than ``"dict"`` returns the raw :class:`pandas.DataFrame`.
+
+    Attributes
+    ----------
+    filename : str or None
+        Full path (with name) of the spectral data file to read.
+    """
+
     def __init__(self, fullfilepath=None, output="dict"):
         super().__init__(fullfilepath)
         self._output = output
 
     def read(self):
+        """Read the spectral data file.
+
+        Parses the header via :class:`NeaHeaderReader` to determine the
+        channel names and the number of rows to skip, then reads the
+        remaining tab-separated data.
+
+        Returns
+        -------
+        tuple[dict or pandas.DataFrame, dict]
+            A `(data, params)` pair: the channel data (as a dictionary of
+            NumPy arrays when :attr:`_output` is ``"dict"``, otherwise as a
+            :class:`pandas.DataFrame`), and the measurement parameter
+            dictionary parsed from the header.
+        """
         data = {}
 
         channels, params = NeaHeaderReader(self.filename).read()
@@ -175,6 +318,26 @@ class ImageStackReader(Reader):
         self.folder_pattern = folder_pattern
 
     def read(self, pattern):
+        """Load and wavelength-sort a stack of GSF images matching `pattern`.
+
+        Locates matching files via :func:`get_filenames`, reads each with
+        :class:`GsfReader`, and determines a wavelength/index for sorting
+        from the corresponding info file (falling back to the enumeration
+        index if the info file is missing or invalid).
+
+        Parameters
+        ----------
+        pattern : str
+            Regular expression matched against filenames within the
+            matching subfolders.
+
+        Returns
+        -------
+        tuple[list, list]
+            A `(imagestack, wns)` pair: the list of image data fields
+            (as read by :class:`GsfReader`), and the corresponding list of
+            wavelengths (or fallback indices), both sorted by wavelength.
+        """
         imagestack = []
         wns = []
         filepaths = get_filenames(
@@ -202,7 +365,23 @@ class ImageStackReader(Reader):
 
 
 def get_wl_from_infofile(infodict: dict):
-    """Returns the wavelength from the info file. If not found, returns 0.0"""
+    """Extract the measurement wavelength/wavenumber from a NeaSpec info dictionary.
+
+    Uses the ``"TargetWavelength"`` entry when set, falling back to the
+    ``"InterferometerCenterDistance"`` entry otherwise. Values below 50
+    (assumed to be in micrometres) are converted to wavenumbers (cm\\ :sup:`-1`).
+
+    Parameters
+    ----------
+    infodict : dict
+        Measurement parameter dictionary, as returned by :class:`NeaInfoReader`.
+
+    Returns
+    -------
+    float or None
+        The resolved wavelength/wavenumber, or ``None`` if it could not be
+        determined from `infodict`.
+    """
     try:
         if infodict["TargetWavelength"] == "":
             wn = infodict["InterferometerCenterDistance"][0]
@@ -218,7 +397,21 @@ def get_wl_from_infofile(infodict: dict):
 
 
 def get_wl_from_filename(filename):
-    """Returns the wavelength from the filename. If not found, returns None"""
+    """Extract a wavenumber value embedded in a filename.
+
+    Looks for a number immediately preceded by ``_`` or ``-`` and followed
+    by a ``cm-1``/``cm_1`` unit suffix (e.g. ``"...-1234.5_cm-1.gsf"``).
+
+    Parameters
+    ----------
+    filename : str
+        File name or path to search; only the final path component is used.
+
+    Returns
+    -------
+    float or None
+        The extracted wavenumber, or ``None`` if no match was found.
+    """
 
     wn = re.findall(
         r"(?<=[_-])(\d+(?:\.\d+)?)(?=(?:_?cm[-_]1|-?cm[-_]1))", PurePath(filename).name
@@ -233,7 +426,25 @@ def get_wl_from_filename(filename):
 
 
 def get_filenames(folder: str, pattern: str, folderpattern=""):
-    """Returns the filepath of all files in the subfolders of the specified folder that contain pattern string in the filename"""
+    """Find files within matching subfolders of `folder` whose names match `pattern`.
+
+    Parameters
+    ----------
+    folder : str
+        Parent folder whose immediate subfolders are searched.
+    pattern : str
+        Regular expression that a subfolder's file names must match to be
+        included.
+    folderpattern : str, optional
+        Regular expression that subfolder names must match to be searched
+        at all. Defaults to matching every subfolder.
+
+    Returns
+    -------
+    list of str
+        Paths (relative to `folder`) of all matching files, in the order
+        they were found.
+    """
 
     filepaths = []
 
@@ -250,7 +461,22 @@ def get_filenames(folder: str, pattern: str, folderpattern=""):
 
 
 def recreate_infofile_name_from_path(filepath: str):
-    """Recreates the name of the info file from the path of the data file"""
+    """Derive the info-file (``.txt``) path corresponding to a data file path.
+
+    The info file is assumed to be named after the data file's parent
+    directory, placed one level up (NeaSpec's standard measurement folder
+    layout).
+
+    Parameters
+    ----------
+    filepath : str
+        Path of a data file inside a NeaSpec measurement subfolder.
+
+    Returns
+    -------
+    str
+        Path of the corresponding info file.
+    """
 
     pathparts = list(PurePath(filepath).parts)
     newparts = pathparts[:-1]
@@ -260,12 +486,32 @@ def recreate_infofile_name_from_path(filepath: str):
 
 
 class NeaFileLegacyReader(Reader):
-    """Reader for .nea files from older neasnom microscopes"""
+    """Reader for legacy ``.nea`` files from older NeaSpec microscopes.
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the legacy ``.nea`` file to read.
+    """
 
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
     def read(self):
+        """Read a legacy ``.nea`` file into per-channel data and scan parameters.
+
+        Parses the tab-separated file's header and metadata columns (Row,
+        Column, Run, Channel, ...) to reconstruct each optical/mechanical
+        channel as a flat array indexed consistently with the scan's pixel
+        area, run count and spectral (omega) depth.
+
+        Returns
+        -------
+        tuple[dict, dict]
+            A `(data, params)` pair: a dictionary mapping channel (and
+            metadata) names to flat NumPy arrays, and a parameter
+            dictionary containing at least ``"PixelArea"`` and ``"Scan"``.
+        """
         data = {}
         params = {}
 
@@ -343,12 +589,36 @@ class NeaFileLegacyReader(Reader):
 
 
 class ImageStackXYZReader(Reader):
-    """Reads a list of images from the subfolders of the specified folder by loading the files that contain the pattern string int the filename"""
+    """Reader for XYZ-format image stack files (tab-separated, one column per spectral slice).
+
+    Parameters
+    ----------
+    fullfilepath : str, optional
+        Full path (with name) of the XYZ image stack file to read.
+    """
 
     def __init__(self, fullfilepath=None):
         super().__init__(fullfilepath)
 
     def read(self):
+        """Read an XYZ-format image stack file into a list of 2D images.
+
+        Parses the tab-separated file's header row as the spectral axis
+        (e.g. wavenumbers) and its ``Row``/``Column`` metadata columns to
+        reshape each spectral slice of the data into a 2D image.
+
+        Returns
+        -------
+        tuple[list of numpy.ndarray, numpy.ndarray or None]
+            A `(image_stack, x)` pair: the list of 2D images (one per
+            spectral axis value), and the parsed spectral axis values `x`
+            (``None`` if the header could not be parsed as floats).
+
+        Raises
+        ------
+        ValueError
+            If no file path was provided (:attr:`filename` is ``None``).
+        """
         if self.filename is None:
             raise ValueError("No folder specified")
         else:

@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.ShiftPhaseToZero
+﻿pySNOM.spectra.ShiftPhaseToZero
 ===============================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: ShiftPhaseToZero
 
+    
 
-.. autoclass:: pySNOM.spectra.ShiftPhaseToZero
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

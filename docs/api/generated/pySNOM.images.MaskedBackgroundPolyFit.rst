@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.images.MaskedBackgroundPolyFit
+﻿pySNOM.images.MaskedBackgroundPolyFit
 =====================================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: MaskedBackgroundPolyFit
 
+    
 
-.. autoclass:: pySNOM.images.MaskedBackgroundPolyFit
+    .. automethod:: __init__
+    .. automethod:: calculate
+    .. automethod:: correct
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.InterpolateInterferogram
+﻿pySNOM.interferograms.InterpolateInterferogram
 ==============================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: InterpolateInterferogram
 
+    
 
-.. autoclass:: pySNOM.interferograms.InterpolateInterferogram
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

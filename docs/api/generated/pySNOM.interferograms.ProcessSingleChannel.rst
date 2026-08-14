@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.ProcessSingleChannel
+﻿pySNOM.interferograms.ProcessSingleChannel
 ==========================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: ProcessSingleChannel
 
+    
 
-.. autoclass:: pySNOM.interferograms.ProcessSingleChannel
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

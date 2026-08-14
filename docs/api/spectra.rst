@@ -14,7 +14,7 @@ interface for processing and analysis but it is not neccessary to use them direc
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    NeaSpectrum
    SingleChannelSpectrum
@@ -26,7 +26,7 @@ the :meth:`pySNOM.Transformation.transform` method to perform the spectrum corre
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    Transformation
    Cut
@@ -45,6 +45,6 @@ that can be used for spectrum processing pipelines. They are wrapped in the foll
 
 .. autosummary::
 	:toctree: generated
-	:template: class.rst
+	:template: autosummary/class.rst
 
 	Tools

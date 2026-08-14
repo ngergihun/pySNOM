@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.CalculateXCorrDrift
+﻿pySNOM.images.CalculateXCorrDrift
 =================================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: CalculateXCorrDrift
 
+    
 
-.. autoclass:: pySNOM.images.CalculateXCorrDrift
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

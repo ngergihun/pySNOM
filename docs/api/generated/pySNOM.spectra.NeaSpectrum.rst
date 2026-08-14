@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.NeaSpectrum
+﻿pySNOM.spectra.NeaSpectrum
 ==========================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: NeaSpectrum
 
+    
 
-.. autoclass:: pySNOM.spectra.NeaSpectrum
+    .. automethod:: __init__
+    .. automethod:: add_channel
+ 
+
+    
+
+ 

@@ -12,7 +12,7 @@ Base class
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    Reader
 
@@ -21,7 +21,7 @@ Image readers
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    GwyReader
    GsfReader
@@ -33,7 +33,7 @@ Spectrum readers
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    NeaSpectralReader
    NeaFileLegacyReader
@@ -43,7 +43,7 @@ Info file readers and helpers
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    NeaHeaderReader
    NeaInfoReader
@@ -53,7 +53,7 @@ Utility functions
 
 .. autosummary::
    :toctree: generated
-   :template: member.rst
+   :template: autosummary/member.rst
 
    get_wl_from_infofile
    get_wl_from_filename

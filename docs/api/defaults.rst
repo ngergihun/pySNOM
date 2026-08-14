@@ -8,7 +8,7 @@ and it provides a consistent interface for accessing default values for differen
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    Defaults
 

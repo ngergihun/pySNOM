@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.CalculateOpticalFlow
+﻿pySNOM.images.CalculateOpticalFlow
 ==================================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: CalculateOpticalFlow
 
+    
 
-.. autoclass:: pySNOM.images.CalculateOpticalFlow
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.CorrectImageDrift
+﻿pySNOM.images.CorrectImageDrift
 ===============================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: CorrectImageDrift
 
+    
 
-.. autoclass:: pySNOM.images.CorrectImageDrift
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

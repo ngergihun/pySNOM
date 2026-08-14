@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.Scale
+﻿pySNOM.spectra.Scale
 ====================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: Scale
 
+    
 
-.. autoclass:: pySNOM.spectra.Scale
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,15 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.NeaInfoReader
+﻿pySNOM.readers.NeaInfoReader
 ============================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: NeaInfoReader
 
+    
 
-.. autoclass:: pySNOM.readers.NeaInfoReader
+    .. automethod:: __init__
+    .. automethod:: parseline
+    .. automethod:: read
+ 
+
+     

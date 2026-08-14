@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.ImageStackReader
+﻿pySNOM.readers.ImageStackReader
 ===============================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: ImageStackReader
 
+    
 
-.. autoclass:: pySNOM.readers.ImageStackReader
+    .. automethod:: __init__
+    .. automethod:: read
+ 
+
+     

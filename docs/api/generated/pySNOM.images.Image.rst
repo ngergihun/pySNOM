@@ -1,12 +1,17 @@
-﻿:orphan:
-
-
-
-pySNOM.images.Image
+﻿pySNOM.images.Image
 ===================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: Image
 
+    
 
-.. autoclass:: pySNOM.images.Image
+    .. automethod:: __init__
+    .. automethod:: extract_channel
+    .. automethod:: image_from_channel
+ 
+
+    
+
+ 

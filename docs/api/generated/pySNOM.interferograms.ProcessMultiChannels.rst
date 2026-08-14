@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.ProcessMultiChannels
+﻿pySNOM.interferograms.ProcessMultiChannels
 ==========================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: ProcessMultiChannels
 
+    
 
-.. autoclass:: pySNOM.interferograms.ProcessMultiChannels
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

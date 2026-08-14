@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.Tools
+﻿pySNOM.spectra.Tools
 ====================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: Tools
 
+    
 
-.. autoclass:: pySNOM.spectra.Tools
+    .. automethod:: __init__
+    .. automethod:: reshape_spectrum_data
+ 
+
+     

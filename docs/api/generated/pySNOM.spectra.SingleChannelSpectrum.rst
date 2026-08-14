@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.SingleChannelSpectrum
+﻿pySNOM.spectra.SingleChannelSpectrum
 ====================================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: SingleChannelSpectrum
 
+    
 
-.. autoclass:: pySNOM.spectra.SingleChannelSpectrum
+    .. automethod:: __init__
+    .. automethod:: add_channel
+ 
+
+    
+
+ 

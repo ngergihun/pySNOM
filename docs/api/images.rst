@@ -14,7 +14,7 @@ interface for processing and analysis but it is not neccessary to use them direc
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    Measurement
    Image
@@ -29,7 +29,7 @@ For these tranformers the `transform` method is a combination of `calculate` and
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
 
    Transformation
    MaskedTransformation
@@ -56,7 +56,7 @@ They are not part of any class and can be used directly.
 
 .. autosummary::
    :toctree: generated
-   :template: member.rst
+   :template: autosummary/member.rst
 
    type_from_channelname
    mask_from_booleans

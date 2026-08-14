@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.GwyReader
+﻿pySNOM.readers.GwyReader
 ========================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: GwyReader
 
+    
 
-.. autoclass:: pySNOM.readers.GwyReader
+    .. automethod:: __init__
+    .. automethod:: read
+ 
+
+     

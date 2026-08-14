@@ -1,12 +1,10 @@
 ﻿:orphan:
 
-
-
 pySNOM.readers.recreate\_infofile\_name\_from\_path
 ===================================================
 
 .. currentmodule:: pySNOM.readers
 
+member
 
-
-.. autofunction:: pySNOM.readers.recreate_infofile_name_from_path
+.. autofunction:: pySNOM::readers.recreate_infofile_name_from_path

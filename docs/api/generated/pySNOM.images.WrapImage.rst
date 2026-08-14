@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.WrapImage
+﻿pySNOM.images.WrapImage
 =======================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: WrapImage
 
+    
 
-.. autoclass:: pySNOM.images.WrapImage
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

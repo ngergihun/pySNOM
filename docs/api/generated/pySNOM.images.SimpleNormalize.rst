@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.images.SimpleNormalize
+﻿pySNOM.images.SimpleNormalize
 =============================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: SimpleNormalize
 
+    
 
-.. autoclass:: pySNOM.images.SimpleNormalize
+    .. automethod:: __init__
+    .. automethod:: calculate
+    .. automethod:: correct
+    .. automethod:: transform
+ 
+
+     

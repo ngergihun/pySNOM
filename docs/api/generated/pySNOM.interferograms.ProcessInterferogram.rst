@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.interferograms.ProcessInterferogram
+﻿pySNOM.interferograms.ProcessInterferogram
 ==========================================
 
 .. currentmodule:: pySNOM.interferograms
 
+.. autoclass:: ProcessInterferogram
 
+    
 
-.. autoclass:: pySNOM.interferograms.ProcessInterferogram
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

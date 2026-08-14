@@ -1,12 +1,13 @@
-﻿:orphan:
-
-
-
-pySNOM.defaults.Defaults
+﻿pySNOM.defaults.Defaults
 ========================
 
 .. currentmodule:: pySNOM.defaults
 
+.. autoclass:: Defaults
 
+    
 
-.. autoclass:: pySNOM.defaults.Defaults
+    .. automethod:: __init__
+ 
+
+     

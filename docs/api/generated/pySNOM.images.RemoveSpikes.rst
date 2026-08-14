@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.RemoveSpikes
+﻿pySNOM.images.RemoveSpikes
 ==========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: RemoveSpikes
 
+    
 
-.. autoclass:: pySNOM.images.RemoveSpikes
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

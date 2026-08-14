@@ -1,12 +1,16 @@
-﻿:orphan:
-
-
-
-pySNOM.images.LineLevel
+﻿pySNOM.images.LineLevel
 =======================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: LineLevel
 
+    
 
-.. autoclass:: pySNOM.images.LineLevel
+    .. automethod:: __init__
+    .. automethod:: calculate
+    .. automethod:: correct
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,15 @@
-﻿:orphan:
-
-
-
-pySNOM.images.AlignImageStack
+﻿pySNOM.images.AlignImageStack
 =============================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: AlignImageStack
 
+    
 
-.. autoclass:: pySNOM.images.AlignImageStack
+    .. automethod:: __init__
+    .. automethod:: calculate
+    .. automethod:: transform
+ 
+
+     

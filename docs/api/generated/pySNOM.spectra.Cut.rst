@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.Cut
+﻿pySNOM.spectra.Cut
 ==================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: Cut
 
+    
 
-.. autoclass:: pySNOM.spectra.Cut
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

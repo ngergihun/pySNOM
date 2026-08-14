@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.spectra.RotatePhase
+﻿pySNOM.spectra.RotatePhase
 ==========================
 
 .. currentmodule:: pySNOM.spectra
 
+.. autoclass:: RotatePhase
 
+    
 
-.. autoclass:: pySNOM.spectra.RotatePhase
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.SelfReference
+﻿pySNOM.images.SelfReference
 ===========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: SelfReference
 
+    
 
-.. autoclass:: pySNOM.images.SelfReference
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

@@ -1,12 +1,17 @@
-﻿:orphan:
-
-
-
-pySNOM.images.Measurement
+﻿pySNOM.images.Measurement
 =========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: Measurement
 
+    
 
-.. autoclass:: pySNOM.images.Measurement
+    .. automethod:: __init__
+    .. automethod:: extract_channel
+    .. automethod:: image_from_channel
+ 
+
+    
+
+ 

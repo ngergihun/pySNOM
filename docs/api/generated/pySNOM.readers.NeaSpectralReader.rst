@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.readers.NeaSpectralReader
+﻿pySNOM.readers.NeaSpectralReader
 ================================
 
 .. currentmodule:: pySNOM.readers
 
+.. autoclass:: NeaSpectralReader
 
+    
 
-.. autoclass:: pySNOM.readers.NeaSpectralReader
+    .. automethod:: __init__
+    .. automethod:: read
+ 
+
+     

@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.Transformation
+﻿pySNOM.images.Transformation
 ============================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: Transformation
 
+    
 
-.. autoclass:: pySNOM.images.Transformation
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

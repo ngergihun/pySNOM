@@ -1,12 +1,14 @@
-﻿:orphan:
-
-
-
-pySNOM.images.LaplaceFillIn
+﻿pySNOM.images.LaplaceFillIn
 ===========================
 
 .. currentmodule:: pySNOM.images
 
+.. autoclass:: LaplaceFillIn
 
+    
 
-.. autoclass:: pySNOM.images.LaplaceFillIn
+    .. automethod:: __init__
+    .. automethod:: transform
+ 
+
+     

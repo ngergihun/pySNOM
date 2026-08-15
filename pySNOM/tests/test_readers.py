@@ -43,7 +43,7 @@ class TestReaders(unittest.TestCase):
         data, params = file_reader.read()
 
         np.testing.assert_almost_equal(data["O2A"][0], 9.580825)
-        np.testing.assert_almost_equal(params["Regulator"][0], 3.767854)
+        np.testing.assert_almost_equal(params["RegulatorPID"][0], 3.767854)
         np.testing.assert_string_equal(params["Scan"], "Fourier Scan")
 
     def test_general_reader_spectrum(self):

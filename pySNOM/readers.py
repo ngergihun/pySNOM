@@ -54,45 +54,79 @@ class NeaHeaderReader(Reader):
         super().__init__(fullfilepath)
 
     @staticmethod
-    def parseline(linestring, params={}):
-        ct = linestring.split("\t")
-        fieldname = ct[0][2:-1]
+    def parseline(linestring, params=None):
+        """Parse a single ``#``-commented header line into `params`.
+
+        Recognizes several NeaSpec-specific field names (scanner center
+        position, scan/pixel area, averaging, interferometer center
+        distance, regulator settings, Q-factor) and stores them with
+        appropriately typed values; any other field is parsed as a float
+        when possible, otherwise kept as a stripped string.
+
+        Parameters
+        ----------
+        linestring : str
+            A single tab-separated header line, starting with ``"# "``.
+        params : dict, optional
+            Dictionary of parameters to update in place with the parsed
+            field. Mutated and returned.
+
+        Returns
+        -------
+        dict
+            The `params` dictionary, updated with the newly parsed field.
+        """
+        if params is None:
+            params = {}
+
+        ct = linestring.rstrip("\r\n").split("\t")
+        if len(ct) < 3:
+            return params
+
+        fieldname = ct[0][2:].rstrip(":")
         fieldname = fieldname.replace(" ", "")
+        values = [value.strip() for value in ct[2:] if value.strip()]
+        if not values:
+            params[fieldname] = ""
+            return params
 
         if "Scanner Center Position" in linestring:
-            fieldname = fieldname[:-5]
-            params[fieldname] = [float(ct[2]), float(ct[3])]
+            fieldname = "ScannerCenterPosition"
+            params[fieldname] = [float(value) for value in values[:2]]
 
         elif "Scan Area" in linestring:
-            fieldname = fieldname[:-7]
-            params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
+            fieldname = "ScanArea"
+            params[fieldname] = [float(value) for value in values[:3]]
 
         elif "Pixel Area" in linestring:
-            fieldname = fieldname[:-7]
-            params[fieldname] = [int(ct[2]), int(ct[3]), int(ct[4])]
+            fieldname = "PixelArea"
+            params[fieldname] = [int(value) for value in values[:3]]
 
         elif "Averaging" in linestring:
-            params[fieldname] = int(ct[2])
+            params[fieldname] = int(values[0])
 
         elif "Interferometer Center/Distance" in linestring:
             fieldname = fieldname.replace("/", "")
             params[fieldname] = [
-                float(ct[2].replace(",", "")),
-                float(ct[3].replace(",", "")),
+                float(value.replace(",", "")) for value in values[:2]
             ]
 
-        elif "Regulator" in linestring:
-            fieldname = fieldname[:-7]
-            params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
+        elif "Regulator (P, I, D)" in linestring:
+            fieldname = "RegulatorPID"
+            params[fieldname] = [float(value) for value in values]
+
+        elif "Regulator (P, I)" in linestring:
+            fieldname = "RegulatorPI"
+            params[fieldname] = [float(value) for value in values]
 
         elif "Q-Factor" in linestring:
             fieldname = fieldname.replace("-", "")
-            params[fieldname] = float(ct[2])
+            params[fieldname] = float(values[0])
 
         else:
-            fieldname = ct[0][2:-1]
+            fieldname = ct[0][2:].rstrip(":")
             fieldname = fieldname.replace(" ", "")
-            val = ct[2]
+            val = values[0]
             val = val.replace(",", "")
             try:
                 params[fieldname] = float(val)
@@ -103,22 +137,21 @@ class NeaHeaderReader(Reader):
 
     def read(self):
         params = {}
+        channels = []
         with open(self.filename, encoding="utf8") as f:
-            # Read www.neaspec.com
-            line = f.readline()
-            count = 1
-            while f:
-                line = f.readline()
-                count = count + 1
-                try:
-                    if line[0] not in ("#", "\n"):
-                        break
-                    if line[0] == "#":
-                        params = NeaHeaderReader.parseline(line, params)
-                except IndexError:
-                    break
+            header_lines = 0
+            for line in f:
+                if not line.strip():
+                    header_lines += 1
+                    continue
+                if line.startswith("#"):
+                    params = NeaHeaderReader.parseline(line, params)
+                    header_lines += 1
+                    continue
+                channels = line.strip().split("\t")
+                break
 
-            channels = line.strip().split("\t")
+            self._header_lines = header_lines
             channels = [channel.strip() for channel in channels]
 
         return channels, params
@@ -141,15 +174,14 @@ class NeaSpectralReader(Reader):
     def read(self):
         data = {}
 
-        channels, params = NeaHeaderReader(self.filename).read()
+        header_reader = NeaHeaderReader(self.filename)
+        channels, params = header_reader.read()
         channels.append("")
-
-        count = len(list(params.keys())) + 2
 
         data = pd.read_csv(
             self.filename,
             sep="\t",
-            skiprows=count,
+            skiprows=header_reader._header_lines + 1,
             encoding="utf-8",
             names=channels,
             lineterminator="\n",

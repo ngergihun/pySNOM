@@ -14,7 +14,7 @@ directly to the API reference for detailed class and method documentation.
 		<h2>Getting started</h2>
 		<p>Install pySNOM and load your first measurement.</p>
 	</a>
-    <a class="landing-card" href="userguide.html">
+    <a class="landing-card" href="guide/index.html">
 		<img class="landing-card__logo" src="_static/users-guide.svg" alt="" />
 		<span class="landing-card__label">Fundamentals and usage</span>
 		<h2>User guide</h2>
@@ -26,7 +26,7 @@ directly to the API reference for detailed class and method documentation.
 		<h2>API reference</h2>
 		<p>Explore readers, images, spectra, interferograms, and defaults.</p>
 	</a>
-	<a class="landing-card" href="https://github.com/Quasars/pySNOM/issues">
+	<a class="landing-card" href="development.html">
 		<img class="landing-card__logo" src="_static/contribute.svg" alt="" />
 		<span class="landing-card__label">Community</span>
 		<h2>Contribute</h2>
@@ -61,6 +61,7 @@ Gergely Nemeth, Marko Toplak & borondics. (2026). Quasars/pySNOM: X.Y.Z
 :maxdepth: 2
 
 getting-started
-userguide
+guide/index
 api/index
+development
 ```

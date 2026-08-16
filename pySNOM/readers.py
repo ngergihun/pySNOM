@@ -81,9 +81,13 @@ class NeaHeaderReader(Reader):
                 float(ct[3].replace(",", "")),
             ]
 
-        elif "Regulator" in linestring:
-            fieldname = fieldname[:-7]
+        elif "Regulator (P, I, D)" in linestring:
+            fieldname = "Regulator"
             params[fieldname] = [float(ct[2]), float(ct[3]), float(ct[4])]
+
+        elif "Regulator (P, I)" in linestring:
+                    fieldname = "RegulatorPercentage"
+                    params[fieldname] = [float(ct[2]), float(ct[3])]
 
         elif "Q-Factor" in linestring:
             fieldname = fieldname.replace("-", "")
@@ -153,10 +157,18 @@ class NeaSpectralReader(Reader):
             encoding="utf-8",
             names=channels,
             lineterminator="\n",
+            low_memory=False,
         ).dropna(axis=1, how="all")
 
         cols_to_keep = [c for c in data.columns if c != ""]
         data = data[cols_to_keep]
+
+        # Remove rows with invalid coordinates caused by neaspec reader bugs
+        row = pd.to_numeric(data["Row"], errors="coerce")
+        column = pd.to_numeric(data["Column"], errors="coerce")
+        valid_coordinates = np.isfinite(row) & np.isfinite(column)
+        if not np.all(valid_coordinates):
+            data = data.loc[valid_coordinates]
 
         if self._output == "dict":
             data = data.to_dict("list")

@@ -1,3 +1,11 @@
+"""Classes and helpers for processing nanoFTIR interferogram data.
+
+This module provides :class:`NeaInterferogram`, a container for raw
+interferogram channels and their acquisition parameters, transformations for
+interpolation and Fourier processing, and :class:`Tools` utilities for
+reshaping data and analysing measurement steps.
+"""
+
 import numpy as np
 import copy
 from enum import Enum
@@ -15,6 +23,40 @@ ScanTypes = Enum("ScanTypes", ["Point", "LineScan", "HyperScan"])
 
 # INTERFEROGRAMS ------------------------------------------------------------------------------------------------------------------
 class NeaInterferogram(NeaSpectrum):
+    """Container for raw nanoFTIR interferograms and acquisition parameters.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary mapping channel names to raw interferogram arrays. For
+        line scans and hyperscans, arrays are reshaped to
+        ``(PixelArea[0], PixelArea[1], PixelArea[2] * Averaging)``.
+    parameters : dict
+        Measurement parameter dictionary containing at least ``"PixelArea"``
+        and ``"Averaging"`` entries.
+    scantype : str, optional
+        Name of a :data:`ScanTypes` member used when parameters do not resolve
+        the scan geometry.
+    filename : str, optional
+        Full path, including name, of the source file.
+    mode : str, optional
+        Name of a :data:`MeasurementModes` member used when parameters do not
+        resolve the measurement mode.
+
+    Attributes
+    ----------
+    data : dict
+        Reshaped interferogram channels.
+    filename : str or None
+        Source file path.
+    mode : str
+        Resolved measurement mode name.
+    scantype : str
+        Resolved scan geometry name.
+    parameters : dict
+        Measurement parameter dictionary.
+    """
+
     def __init__(
         self, data, parameters, scantype="Point", filename=None, mode="nanoFTIR"
     ):
@@ -25,7 +67,7 @@ class NeaInterferogram(NeaSpectrum):
 
     @property
     def data(self):
-        """Property - data (dict with measurement channels)"""
+        """Dictionary containing the measurement channels."""
         return self._data
 
     @data.setter
@@ -34,7 +76,21 @@ class NeaInterferogram(NeaSpectrum):
         self._data = Tools.reshape_ifg_data(value, self._parameters)
 
     def add_channel(self, values, channelname):
-        """Adds a new channel to data dictionary"""
+        """Add a channel and reshape it to the interferogram layout.
+
+        Parameters
+        ----------
+        values : array_like
+            Flat channel values with a length matching the measurement
+            dimensions.
+        channelname : str
+            Name under which to store the channel.
+
+        Raises
+        ------
+        ValueError
+            If `channelname` already exists in :attr:`data`.
+        """
         if channelname not in list(self._data.keys()):
             self._data[channelname] = np.reshape(
                 values,
@@ -50,11 +106,40 @@ class NeaInterferogram(NeaSpectrum):
 
 # TRANSFORMATIONS ------------------------------------------------------------------------------------------------------------------
 class Transformation:
+    """Base class for interferogram transformations."""
+
     def transform(self, data):
+        """Transform interferogram data.
+
+        Parameters
+        ----------
+        data : array_like
+            Interferogram data to transform.
+
+        Raises
+        ------
+        NotImplementedError
+            Always, unless overridden by a subclass.
+        """
         raise NotImplementedError()
 
 
 class ProcessInterferogram(Transformation):
+    """Fourier transform one interpolated interferogram.
+
+    Parameters
+    ----------
+    apod : bool, optional
+        Apply an asymmetric apodization window before the Fourier transform.
+    windowtype : str, optional
+        Name of the window function in ``scipy.signal.windows``.
+    nzeros : int, optional
+        Zero-filling factor applied to the interferogram length.
+    wlpidx : int, optional
+        Index of the white-light position. If omitted, use the largest
+        absolute interferogram value.
+    """
+
     def __init__(self, apod=True, windowtype="blackmanharris", nzeros=4, wlpidx=None):
         self.apod = apod
         self.nzeros = nzeros
@@ -62,6 +147,23 @@ class ProcessInterferogram(Transformation):
         self.windowtype = windowtype
 
     def transform(self, ifg, maxis):
+        """Calculate the positive-frequency complex spectrum.
+
+        Parameters
+        ----------
+        ifg : array_like
+            One-dimensional, uniformly sampled interferogram.
+        maxis : array_like
+            Mirror-position axis corresponding to `ifg`, in metres.
+
+        Returns
+        -------
+        complex ndarray
+            Positive-frequency complex spectrum after centering and FFT.
+        ndarray
+            Wavenumber axis corresponding to the returned spectrum, in
+            inverse centimetres.
+        """
         # Find the location index of the WLP
         if self.wlpidx is None:
             self.wlpidx = np.argmax(np.abs(ifg))
@@ -86,12 +188,37 @@ class ProcessInterferogram(Transformation):
 
 
 class InterpolateInterferogram(Transformation):
-    """Reinterpolates the raw interferograms to a uniform grid."""
+    """Reinterpolate raw interferograms to a uniform mirror-position grid.
+
+    Parameters
+    ----------
+    method : {"spline", "linear"}, optional
+        Interpolation method. ``"spline"`` uses
+        :class:`scipy.interpolate.CubicSpline`; ``"linear"`` uses
+        :func:`scipy.interpolate.interp1d`.
+    """
 
     def __init__(self, method="spline"):
         self.method = method
 
     def transform(self, ifg, maxis):
+        """Interpolate one or more interferograms.
+
+        Parameters
+        ----------
+        ifg : ndarray
+            One- or two-dimensional interferogram data. Rows in a 2-D array
+            represent separate interferograms.
+        maxis : ndarray
+            Mirror-position axis or axes corresponding to `ifg`.
+
+        Returns
+        -------
+        tuple of ndarray
+            Interpolated interferograms and their uniform mirror-position
+            axis. Inputs with unsupported dimensionality are returned
+            unchanged.
+        """
         # if np.iscomplex(ifg).any():
         newifg = np.zeros(np.shape(ifg)) * complex(1j)
         # else:
@@ -142,6 +269,27 @@ class InterpolateInterferogram(Transformation):
 
 
 class ProcessSingleChannel(Transformation):
+    """Process one optical demodulation channel into a spectrum.
+
+    Parameters
+    ----------
+    order : int
+        Optical demodulation order. Channels ``O{order}A`` and ``O{order}P``
+        are read from the interferogram.
+    method : {"abs", "real", "imag", "complex", "simple"}, optional
+        Representation used to combine amplitude and phase channels.
+    apod : bool, optional
+        Apply asymmetric apodization before the Fourier transform.
+    windowtype : str, optional
+        Name of the SciPy window function used for apodization.
+    nzeros : int, optional
+        Zero-filling factor for the Fourier transform.
+    interpmethod : {"spline", "linear"}, optional
+        Method used to make the mirror-position grid uniform.
+    simpleoutput : bool, optional
+        If true, return arrays instead of a :class:`NeaSpectrum`.
+    """
+
     def __init__(
         self,
         order,
@@ -161,6 +309,21 @@ class ProcessSingleChannel(Transformation):
         self.simpleoutput = simpleoutput
 
     def transform(self, neaifg):  # Load amplitude and phase of the given channel
+        """Process the selected channel of `neaifg`.
+
+        Parameters
+        ----------
+        neaifg : NeaInterferogram
+            Interferogram containing amplitude, phase, and mirror-position
+            channels for the requested order.
+
+        Returns
+        -------
+        tuple of ndarray or NeaSpectrum
+            If `simpleoutput` is true, return ``(amplitude, phase,
+            wavenumber)``. Otherwise return the processed data as a
+            :class:`pySNOM.spectra.NeaSpectrum`.
+        """
         # Calculate the interferogram to process based on the given method
 
         channelA = f"O{self.order}A"
@@ -241,6 +404,25 @@ class ProcessSingleChannel(Transformation):
 
 
 class ProcessMultiChannels(Transformation):
+    """Process optical channels for demodulation orders zero through five.
+
+    Parameters
+    ----------
+    method : {"abs", "real", "imag", "complex", "simple"}, optional
+        Representation used for each amplitude/phase channel pair.
+    apod : bool, optional
+        Apply asymmetric apodization before each Fourier transform.
+    windowtype : str, optional
+        Name of the SciPy window function used for apodization.
+    nzeros : int, optional
+        Zero-filling factor for each Fourier transform.
+    interpmethod : {"spline", "linear"}, optional
+        Method used to make the mirror-position grid uniform.
+    simpleoutput : bool, optional
+        Intended to select array output; when false, return a
+        :class:`NeaSpectrum`.
+    """
+
     def __init__(
         self,
         method="complex",
@@ -258,6 +440,19 @@ class ProcessMultiChannels(Transformation):
         self.simpleoutput = simpleoutput
 
     def transform(self, neaifg):
+        """Process all supported optical channels in `neaifg`.
+
+        Parameters
+        ----------
+        neaifg : NeaInterferogram
+            Interferogram containing optical amplitude and phase channels.
+
+        Returns
+        -------
+        NeaSpectrum
+            Spectrum containing amplitude and phase channels and a
+            ``"Wavenumber"`` axis.
+        """
         spectrum_data = {}
         spectrum_parameters = copy.deepcopy(neaifg.parameters)
 
@@ -292,6 +487,22 @@ class ProcessMultiChannels(Transformation):
 
 
 class ProcessAllPoints(Transformation):
+    """Process every spatial point in an interferogram scan.
+
+    Parameters
+    ----------
+    method : {"abs", "real", "imag", "complex", "simple"}, optional
+        Representation used to combine amplitude and phase channels.
+    apod : bool, optional
+        Apply asymmetric apodization before each Fourier transform.
+    windowtype : str, optional
+        Name of the SciPy window function used for apodization.
+    nzeros : int, optional
+        Zero-filling factor for each Fourier transform.
+    interpmethod : {"spline", "linear"}, optional
+        Method used to make the mirror-position grid uniform.
+    """
+
     def __init__(
         self,
         method="complex",
@@ -307,6 +518,19 @@ class ProcessAllPoints(Transformation):
         self.interpmethod = interpmethod
 
     def transform(self, neaifg):
+        """Process all available optical channels at every scan point.
+
+        Parameters
+        ----------
+        neaifg : NeaInterferogram
+            Point, line-scan, or hyperscan interferogram.
+
+        Returns
+        -------
+        NeaSpectrum
+            Spectrum data with spatial dimensions preserved and processed
+            amplitude, phase, and wavenumber channels.
+        """
         if (
             neaifg.parameters["PixelArea"][0] == 1
             and neaifg.parameters["PixelArea"][1] == 1
@@ -393,11 +617,30 @@ class ProcessAllPoints(Transformation):
 
 # TOOLS ------------------------------------------------------------------------------------------------------------------
 class Tools:
+    """Utility methods for interferogram reshaping and analysis."""
+
     def __init__(self):
         pass
 
     @staticmethod
     def reshape_ifg_data(data, params):
+        """Reshape raw interferogram channels for spatial scans.
+
+        Parameters
+        ----------
+        data : dict
+            Channel names mapped to flat arrays. The dictionary is modified
+            in place for multi-point data.
+        params : dict
+            Measurement parameters containing ``"PixelArea"`` and
+            ``"Averaging"``.
+
+        Returns
+        -------
+        dict
+            The input dictionary, with multi-point channels reshaped to
+            ``(PixelArea[0], PixelArea[1], PixelArea[2] * Averaging)``.
+        """
         if params["PixelArea"][1] != 1 or params["PixelArea"][0] != 1:
             for channel in list(data.keys()):
                 data[channel] = np.reshape(
@@ -414,12 +657,42 @@ class Tools:
 
     @staticmethod
     def reshape_linescan_interferogram(data, parameters):
+        """Reshape line-scan data into spatial points and interferogram depth.
+
+        Parameters
+        ----------
+        data : array_like
+            Raw line-scan values.
+        parameters : dict
+            Measurement parameters containing ``"PixelArea"``.
+
+        Returns
+        -------
+        ndarray
+            Array with shape ``(PixelArea[0], PixelArea[2])``.
+        """
         return np.reshape(
             np.ravel(data), (parameters["PixelArea"][0], parameters["PixelArea"][2])
         )
 
     @staticmethod
     def asymmetric_window(npoints, centerindex=None, windowtype="blackmanharris"):
+        """Construct an asymmetric window centered at a white-light position.
+
+        Parameters
+        ----------
+        npoints : int
+            Number of samples in the output window.
+        centerindex : int, optional
+            Index of the window center. Defaults to the midpoint.
+        windowtype : str, optional
+            Name of a window function in ``scipy.signal.windows``.
+
+        Returns
+        -------
+        ndarray
+            Window with `npoints` samples.
+        """
         if centerindex is None:
             centerindex = int(len(windowPart2) / 2)
 
@@ -444,6 +717,19 @@ class Tools:
 
     @staticmethod
     def analyse_steps(maxis):
+        """Calculate mean step sizes and their spread for mirror positions.
+
+        Parameters
+        ----------
+        maxis : ndarray
+            Two-dimensional array whose rows contain mirror-position axes.
+
+        Returns
+        -------
+        tuple of ndarray
+            Mean step sizes and standard deviations of the step sizes, each
+            with shape ``(number_of_rows, 1)``.
+        """
         stepsize = np.zeros((np.shape(maxis)[0], 1))
         stepspread = np.zeros((np.shape(maxis)[0], 1))
         for i in range(np.shape(maxis)[0]):

@@ -5,10 +5,12 @@ import sys
 project = "pySNOM"
 copyright = "2026, pySNOM contributors"
 author = "pySNOM contributors"
-release = "0.3.1"
 
 # Import the package directly from this checkout for autodoc.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from pySNOM import __version__
+
+version = release = __version__
 
 extensions = [
     "myst_parser",
